@@ -79,6 +79,7 @@ export class ExpensesComponent implements OnInit {
     shops: any[] = [];
     expenseForm: FormGroup;
     showForm = false;
+    user: any = this.authService.getCurrentUser();
 
     constructor(
         private expenseService: ExpenseService,
@@ -96,6 +97,12 @@ export class ExpensesComponent implements OnInit {
 
     ngOnInit() {
         this.loadData();
+         if (this.user?.role !== 'SUPER_ADMIN') {
+            this.expenseForm.patchValue({ shopId: this.user.shopId });
+            this.expenseForm.get('shopId')?.disable();
+        } else {
+            this.expenseForm.get('shopId')?.enable();
+        }
     }
 
     loadData() {
@@ -119,7 +126,7 @@ export class ExpensesComponent implements OnInit {
         const data = {
             ...this.expenseForm.value,
             userId: this.authService.getCurrentUser()?.id,
-            shopId: Number(this.expenseForm.value.shopId)
+            shopId:  this.user?.role !== 'SUPER_ADMIN' ? this.user.shopId : Number(this.expenseForm.value.shopId)
         };
 
         this.expenseService.createExpense(data).subscribe(() => {

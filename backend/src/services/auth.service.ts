@@ -39,6 +39,6 @@ export const loginUser = async (data: any) => {
         throw new Error('Invalid email or password');
     }
 
-    const token = generateToken({ id: user.id, email: user.email, role: user.role });
+    const token = generateToken({ id: user.id, email: user.email, role: user.role, shopId: user.shopId });
     return { user, token };
 };

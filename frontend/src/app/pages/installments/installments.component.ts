@@ -257,16 +257,19 @@ export class InstallmentsComponent implements OnInit {
                         <body>
                             ${printContent}
                             <script>
-                                window.onload = function() {
+                                window.onload = function () {
                                     window.print();
+                                };
+
+                                window.onafterprint = function () {
                                     window.close();
-                                }
-                            </script>
+                                };
+                            <\/script>
                         </body>
                     </html>
                 `);
-                // printWindow.document.close();
-                printWindow.focus();
+                printWindow.document.close();
+                // printWindow.focus();
             }
         }, 100);
     }
@@ -329,16 +332,19 @@ export class InstallmentsComponent implements OnInit {
                             <p>Printed on ${new Date().toLocaleString()}</p>
                         </div>
                         
-                        <script>
-                            window.onload = function() {
+                       <script>
+                            window.onload = function () {
                                 window.print();
+                            };
+
+                            window.onafterprint = function () {
                                 window.close();
-                            }
-                        </script>
+                            };
+                        <\/script>
                     </body>
                 </html>
             `);
-        //    printWindow.document.close();
+           printWindow.document.close();
         }
     }
 }

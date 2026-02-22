@@ -41,12 +41,14 @@ import { AuthService } from '../../services/auth.service';
                         <option *ngFor="let s of suppliers" [value]="s.id">{{ s.name }}</option>
                     </select>
                 </div>
+                
                 <div class="form-group">
                     <label class="form-label">Shop</label>
-                    <select class="form-control" formControlName="shopId">
+                    <select class="form-control" formControlName="shopId" >
                         <option *ngFor="let shop of shops" [value]="shop.id">{{ shop.name }}</option>
                     </select>
                 </div>
+                
             </div>
 
             <h4>Items</h4>
@@ -131,6 +133,7 @@ export class PurchasesComponent implements OnInit {
     suppliers: any[] = [];
     products: any[] = [];
     shops: any[] = [];
+    user: any = this.authService.getCurrentUser();
 
     purchaseForm: FormGroup;
     showForm = false;
@@ -147,6 +150,7 @@ export class PurchasesComponent implements OnInit {
         private authService: AuthService,
         private fb: FormBuilder
     ) {
+        console.log('Current User:', this.user);
         this.purchaseForm = this.fb.group({
             supplierId: [null, Validators.required],
             shopId: [null, Validators.required],
@@ -156,6 +160,12 @@ export class PurchasesComponent implements OnInit {
 
     ngOnInit() {
         this.loadData();
+        if (this.user?.role !== 'SUPER_ADMIN') {
+            this.purchaseForm.patchValue({ shopId: this.user.shopId });
+            this.purchaseForm.get('shopId')?.disable();
+        } else {
+            this.purchaseForm.get('shopId')?.enable();
+        }
     }
 
     loadData() {
@@ -201,7 +211,7 @@ export class PurchasesComponent implements OnInit {
 
         const data = {
             ...this.purchaseForm.value,
-            shopId: Number(this.purchaseForm.value.shopId),
+            shopId:  this.user?.role !== 'SUPER_ADMIN' ? this.user.shopId : Number(this.purchaseForm.value.shopId),
             supplierId : Number(this.purchaseForm.value.supplierId),
             totalAmount: this.calculateTotal(),
             userId: this.authService.getCurrentUser()?.id,

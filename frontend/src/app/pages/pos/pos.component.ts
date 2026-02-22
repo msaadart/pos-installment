@@ -6,11 +6,13 @@ import { SalesService } from '../../services/sales.service';
 import { AuthService } from '../../services/auth.service';
 import { CustomerService } from '../../services/customer.service';
 import { FormsModule } from '@angular/forms';
+import { NgOptimizedImage } from '@angular/common';
+import { environment } from '../../../environments/environment.development';
 
 @Component({
     selector: 'app-pos',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, FormsModule],
+    imports: [CommonModule, ReactiveFormsModule, FormsModule, NgOptimizedImage],
     template: `
     <div class="container" style="padding-top: 2rem; display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
       <!-- Product Selection -->
@@ -19,13 +21,20 @@ import { FormsModule } from '@angular/forms';
         <div style="margin-bottom: 1rem;">
             <input type="text" class="form-control" placeholder="Search product..." (input)="filterProducts($event)">
         </div>
+        @defer{
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem;">
-            <div *ngFor="let product of filteredProducts" class="card" (click)="addToCart(product)" style="cursor: pointer; border: 1px solid var(--border-color);">
-                <h4>{{ product.name }}</h4>
+            <div *ngFor="let product of filteredProducts" class="card" (click)="addToCart(product)" style="cursor: pointer; border: 1px solid var(--border-color); padding: 0.5rem;">
+            <img [ngSrc]="product.imageUrl ? apiUrl + product.imageUrl : 'assets/placeholder.png'" [alt]="product.name" width="100" height="100" style="width: 100%; height: 100px; object-fit: cover; border-bottom: 1px solid var(--border-color);">    
+            <h4>{{ product.name }}</h4>
                 <p>Rs. {{ product.price | number:'1.2-2' }}</p>
                 <p style="font-size: 0.8rem; color: var(--text-muted);">Stock: {{ product.stock }}</p>
             </div>
         </div>
+        }@placeholder{
+            <div style="text-align: center; color: var(--text-muted); margin: 2rem 0;">
+                Loading products...
+            </div>
+        }
       </div>
 
       <!-- Cart & Checkout -->
@@ -105,6 +114,7 @@ export class PosComponent implements OnInit {
     selectedCustomerId: number | null = null;
     downPayment: number = 0;
     duration: number = 6;
+    apiUrl = environment.baseUrl;
 
     constructor(
         private productService: ProductService,

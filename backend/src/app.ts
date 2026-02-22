@@ -26,11 +26,15 @@ app.use(cors({
     credentials: true,
 }
 ));
-app.use(helmet());
+
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" }
+}));
 app.use(morgan('dev'));
 
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ limit: '10mb', extended: true }));
+app.use(express.json({ limit: '5mb' }));
+app.use(express.urlencoded({ limit: '5mb', extended: true }));
 
 app.use('/uploads', express.static(path.resolve('uploads')));
 

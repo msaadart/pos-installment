@@ -4,11 +4,13 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } 
 import { ProductService } from '../../services/product.service';
 import { ShopService } from '../../services/shop.service';
 import { environment } from '../../../environments/environment';
+import { NgOptimizedImage } from '@angular/common';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
     selector: 'app-products',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, FormsModule],
+    imports: [CommonModule, ReactiveFormsModule, FormsModule, NgOptimizedImage],
     template: `
     <div class="container" style="padding-top: 2rem;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
@@ -82,7 +84,16 @@ import { environment } from '../../../environments/environment';
                     </select>
                 </div>
             </div>
-
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label class="form-label">Barcode</label>
+                    <input type="text" class="form-control" formControlName="barcode">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <input type="text" class="form-control" formControlName="description" rows="3">
+                </div>
+            </div>
             <div class="form-group">
                 <label class="form-label">Product Image</label>
                 <input type="file" class="form-control" (change)="onFileSelected($event)" accept="image/*">
@@ -112,7 +123,7 @@ import { environment } from '../../../environments/environment';
             <tbody>
                 <tr *ngFor="let product of products" style="border-bottom: 1px solid var(--border-color);">
                     <td style="padding: 1rem;">
-                        <img *ngIf="product.imageUrl" [src]="apiUrl + product.imageUrl" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                        <img *ngIf="product.imageUrl" [ngSrc]="apiUrl + product.imageUrl" width="50" height="50" style="object-fit: cover; border-radius: 4px;">
                         <span *ngIf="!product.imageUrl">-</span>
                     </td>
                     <td style="padding: 1rem;">{{ product.name }}</td>
@@ -137,6 +148,8 @@ export class ProductsComponent implements OnInit {
     categories: any[] = [];
     brands: any[] = [];
     apiUrl = environment.baseUrl;
+    user: any = this.authService.getCurrentUser();
+
 
     productForm: FormGroup;
     showForm = false;
@@ -151,7 +164,8 @@ export class ProductsComponent implements OnInit {
     constructor(
         private productService: ProductService,
         private shopService: ShopService,
-        private fb: FormBuilder
+        private fb: FormBuilder,
+        private authService: AuthService,
     ) {
         this.productForm = this.fb.group({
             name: ['', Validators.required],
@@ -161,12 +175,20 @@ export class ProductsComponent implements OnInit {
             stock: [0, Validators.required],
             shopId: [Number, Validators.required],
             categoryId: [Number],
-            brandId: [Number]
+            brandId: [Number],
+            barcode: ['', Validators.required],
+            description: ['']
         });
     }
 
     ngOnInit() {
         this.loadData();
+         if (this.user?.role !== 'SUPER_ADMIN') {
+            this.productForm.patchValue({ shopId: this.user.shopId });
+            this.productForm.get('shopId')?.disable();
+        } else {
+            this.productForm.get('shopId')?.enable();
+        }
     }
 
     loadData() {
@@ -215,7 +237,7 @@ export class ProductsComponent implements OnInit {
 
         const productData = {
             ...this.productForm.value,
-            shopId:Number(this.productForm.value.shopId),
+            shopId: this.user?.role !== 'SUPER_ADMIN' ? this.user.shopId : Number(this.productForm.value.shopId),
             categoryId: Number(this.productForm.value.categoryId),
             brandId:    Number(this.productForm.value.brandId),
             image: this.selectedFileBase64
