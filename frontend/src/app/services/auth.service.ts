@@ -13,6 +13,9 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<any>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
+  private selectedShopIdSubject = new BehaviorSubject<number | null>(null);
+  public selectedShopId$ = this.selectedShopIdSubject.asObservable();
+
   constructor(private http: HttpClient, private router: Router) {
     this.loadUser();
   }
@@ -27,6 +30,14 @@ export class AuthService {
           this.logout();
         } else {
           this.currentUserSubject.next(decoded);
+          if (decoded.role !== 'SUPER_ADMIN') {
+            this.selectedShopIdSubject.next(decoded.shopId);
+          } else {
+            const savedShopId = localStorage.getItem('selectedShopId');
+            if (savedShopId) {
+              this.selectedShopIdSubject.next(Number(savedShopId));
+            }
+          }
         }
       } catch (e) {
         this.logout();
@@ -38,15 +49,23 @@ export class AuthService {
     return this.http.post(`${this.apiUrl}/login`, credentials).pipe(
       tap((res: any) => {
         localStorage.setItem('token', res.token);
-        const decoded = jwtDecode(res.token);
+        const decoded: any = jwtDecode(res.token);
         this.currentUserSubject.next(decoded);
+        if (decoded.role !== 'SUPER_ADMIN') {
+          this.selectedShopIdSubject.next(decoded.shopId);
+        } else {
+          localStorage.removeItem('selectedShopId');
+          this.selectedShopIdSubject.next(null);
+        }
       })
     );
   }
 
   logout() {
     localStorage.removeItem('token');
+    localStorage.removeItem('selectedShopId');
     this.currentUserSubject.next(null);
+    this.selectedShopIdSubject.next(null);
     this.router.navigate(['/login']);
   }
 
@@ -60,5 +79,18 @@ export class AuthService {
 
   getCurrentUser(): any {
     return this.currentUserSubject.value;
+  }
+
+  setSelectedShopId(id: number | null) {
+    if (id) {
+      localStorage.setItem('selectedShopId', id.toString());
+    } else {
+      localStorage.removeItem('selectedShopId');
+    }
+    this.selectedShopIdSubject.next(id);
+  }
+
+  getSelectedShopId(): number | null {
+    return this.selectedShopIdSubject.value;
   }
 }

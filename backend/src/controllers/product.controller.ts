@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { AuthRequest } from '../middleware/auth.middleware';
 import * as productService from '../services/product.service';
 
 // --- Categories ---
@@ -50,10 +51,15 @@ export const createProduct = async (req: Request, res: Response) => {
     }
 };
 
-export const getAllProducts = async (req: Request, res: Response) => {
+export const getAllProducts = async (req: AuthRequest, res: Response) => {
     try {
         const filters: any = {};
-        if (req.query.shopId) filters.shopId = Number(req.query.shopId);
+        if (req.user.role !== 'SUPER_ADMIN') {
+            filters.shopId = req.user.shopId;
+        } else if (req.shopId) {
+            filters.shopId = req.shopId;
+        }
+
         if (req.query.categoryId) filters.categoryId = Number(req.query.categoryId);
 
         // Search by name or SKU

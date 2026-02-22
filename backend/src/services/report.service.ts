@@ -1,24 +1,34 @@
 import prisma from '../utils/prisma';
 
-export const getDashboardStats = async () => {
-    const totalSales = await prisma.sale.aggregate({ _sum: { totalAmount: true } });
-    const totalProducts = await prisma.product.count();
-    const totalUsers = await prisma.user.count();
-    const totalShops = await prisma.shop.count();
+export const getDashboardStats = async (filters: any = {}) => {
+    const { shopId } = filters;
+    const where = shopId ? { shopId } : {};
+
+    const totalSales = await prisma.sale.aggregate({
+        where,
+        _sum: { totalAmount: true }
+    });
+    const totalProducts = await prisma.product.count({ where });
+    const totalUsers = await prisma.user.count({ where });
+    const totalShops = await prisma.shop.count(); // Shops count is usually global
 
     // Recent Sales
     const recentSales = await prisma.sale.findMany({
+        where,
         take: 5,
         orderBy: { createdAt: 'desc' },
         include: { user: { select: { name: true } } }
     });
 
     const activeInstallmentsCount = await prisma.installmentPlan.count({
-        where: { status: 'ACTIVE' }
+        where: {
+            status: 'ACTIVE',
+            sale: where
+        }
     });
 
     return {
-        totalSales: totalSales._sum.totalAmount || 0,
+        totalSales: Number(totalSales._sum.totalAmount) || 0,
         totalProducts,
         totalUsers,
         totalShops,
@@ -27,26 +37,37 @@ export const getDashboardStats = async () => {
     };
 };
 
-export const getSalesReport = async (startDate: Date, endDate: Date) => {
+export const getSalesReport = async (filters: any) => {
+    const { startDate, endDate, shopId } = filters;
     return await prisma.sale.findMany({
-        where: { createdAt: { gte: startDate, lte: endDate } },
+        where: {
+            createdAt: { gte: startDate, lte: endDate },
+            ...(shopId ? { shopId } : {})
+        },
         include: { items: true, user: { select: { name: true } } },
         orderBy: { createdAt: 'desc' }
     });
 };
 
-export const getStockReport = async () => {
+export const getStockReport = async (filters: any = {}) => {
+    const { shopId } = filters;
     return await prisma.product.findMany({
-        where: { stock: { lte: 10 } }, // Low stock query logic
+        where: {
+            stock: { lte: 10 },
+            ...(shopId ? { shopId } : {})
+        },
         include: { shop: { select: { name: true } } }
     });
 };
 
 export const getInstallmentDueReport = async (filters: any = {}) => {
-    const { phone, cnic } = filters;
+    const { phone, cnic, shopId } = filters;
     const where: any = {
         status: { in: ['PENDING', 'PARTIALLY_PAID'] },
-        dueDate: { lte: new Date() }
+        dueDate: { lte: new Date() },
+        plan: {
+            sale: shopId ? { shopId } : {}
+        }
     };
 
     if (phone || cnic) {
@@ -76,13 +97,21 @@ export const getInstallmentDueReport = async (filters: any = {}) => {
 };
 
 export const getCustomerInstallmentSummary = async (filters: any = {}) => {
-    const { phone, cnic } = filters;
+    const { phone, cnic, shopId } = filters;
     const customerWhere: any = { isActive: true };
     if (phone) customerWhere.phone = { contains: phone };
     if (cnic) customerWhere.cnic = { contains: cnic };
+    if (shopId) customerWhere.shopId = shopId;
 
     const customers = await prisma.customer.findMany({
-        where: customerWhere,
+        where: {
+            ...customerWhere,
+            sales: {
+                some: {
+                    saleType: 'INSTALLMENT'
+                }
+            }
+        },
         include: {
             sales: {
                 where: { saleType: 'INSTALLMENT' },

@@ -2,7 +2,7 @@ import prisma from '../utils/prisma';
 import { createSale } from './sale.service';
 
 export const createInstallmentPlan = async (data: any) => {
-    const { saleId, totalAmount, downPayment, totalInstallments, interestRate, startDate, monthlyInstallment } = data;
+    const { saleId, totalAmount, downPayment, totalInstallments, startDate, monthlyInstallment, shopId } = data;
 
     // 1. Create Plan
     const plan = await prisma.installmentPlan.create({
@@ -12,9 +12,9 @@ export const createInstallmentPlan = async (data: any) => {
             downPayment,
             monthlyInstallment,
             totalInstallments,
-            interestRate: interestRate || 0,
             startDate: new Date(startDate),
-            status: 'ACTIVE'
+            status: 'ACTIVE',
+            shopId: shopId || 1 // Default to 1 if not provided, but ideally passed from sale
         }
     });
 
@@ -52,14 +52,19 @@ export const createInstallmentSale = async (data: any) => {
 
     // 2. Create Plan attached to Sale
     planData.saleId = sale.id;
+    planData.shopId = sale.shopId; // Take shopId from the created sale
     const plan = await createInstallmentPlan(planData);
 
     return { sale, plan };
 };
 
 export const getInstallmentPlans = async (filters: any = {}) => {
-    const { phone, cnic } = filters;
+    const { phone, cnic, shopId } = filters;
     const where: any = {};
+
+    if (shopId) {
+        where.shopId = shopId;
+    }
 
     if (phone) {
         where.sale = { customer: { phone: { contains: phone } } };

@@ -4,7 +4,7 @@ import { authenticate, authorize} from '../middleware/auth.middleware';
 
 const router = Router();
 
-router.post('/', authenticate, authorize(['SUPER_ADMIN', 'SHOP_ADMIN']), createCustomer);
+router.post('/', authenticate, authorize(['SUPER_ADMIN', 'SHOP_ADMIN', 'SALES_USER']), createCustomer);
 router.get('/', authenticate, getAllCustomers);
 router.get('/:id', authenticate, getCustomerById);
 router.put('/:id', authenticate, authorize(['SUPER_ADMIN', 'SHOP_ADMIN']), updateCustomer);

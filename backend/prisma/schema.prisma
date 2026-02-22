@@ -46,6 +46,7 @@ model Shop {
   purchases Purchase[]
   customers Customer[] // Customers might be shop-specific or global
   expenses  Expense[]
+  installmentPlans InstallmentPlan[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -193,10 +194,11 @@ model InstallmentPlan {
   downPayment     Decimal  @db.Decimal(10, 2)
   monthlyInstallment Decimal @db.Decimal(10, 2)
   totalInstallments Int
-  interestRate    Decimal  @default(0) @db.Decimal(5, 2)
   startDate       DateTime
   endDate         DateTime?
   status          PlanStatus @default(ACTIVE)
+  shopId          Int       @default(1) // Added to match requirement
+  shop            Shop       @relation(fields: [shopId], references: [id])
   
   installments    Installment[]
   createdAt       DateTime @default(now())
@@ -218,7 +220,6 @@ model Installment {
   paidAmount      Decimal  @default(0) @db.Decimal(10, 2)
   status          InstallmentStatus @default(PENDING)
   paidAt          DateTime?
-  penalty         Decimal  @default(0) @db.Decimal(10, 2)
   notes           String?
   paymentMethod   PaymentMethod? @default(CASH)
   referenceId     String?
@@ -282,4 +283,5 @@ model Expense {
   shop        Shop     @relation(fields: [shopId], references: [id])
   date        DateTime @default(now())
   userId      Int?
+  isActive    Boolean  @default(true)
 }

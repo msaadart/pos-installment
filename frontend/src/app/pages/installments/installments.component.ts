@@ -13,10 +13,13 @@ import { FormsModule } from '@angular/forms';
 
       <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
         <div style="flex: 1;">
-            <input type="text" class="form-control" placeholder="Search by Phone..." [(ngModel)]="searchPhone" (input)="loadPlans()">
+            <input type="text" class="form-control" placeholder="Search by Phone..." [(ngModel)]="searchPhone">
         </div>
         <div style="flex: 1;">
-            <input type="text" class="form-control" placeholder="Search by CNIC..." [(ngModel)]="searchCNIC" (input)="loadPlans()">
+            <input type="text" class="form-control" placeholder="Search by CNIC..." [(ngModel)]="searchCNIC">
+        </div>
+        <div>
+            <button class="btn btn-primary" (click)="loadPlans()">Search</button>
         </div>
       </div>
 
@@ -128,7 +131,7 @@ import { FormsModule } from '@angular/forms';
       <div id="thermal-receipt" style="display: none;">
           <div style="width: 80mm; padding: 5mm; font-family: 'Courier New', Courier, monospace; font-size: 12px; line-height: 1.2;">
               <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 5mm; margin-bottom: 5mm;">
-                  <h2 style="margin: 0;">INSTALLMENT AI</h2>
+                  <h2 style="margin: 0;">giftokarachi.com</h2>
                   <p style="margin: 5px 0;">PAYMENT RECEIPT</p>
               </div>
               <div style="margin-bottom: 5mm;">
@@ -299,7 +302,7 @@ export class InstallmentsComponent implements OnInit {
                     </head>
                     <body>
                         <div class="header">
-                            <h1>INSTALLMENT AI</h1>
+                            <h1>giftokarachi.com</h1>
                             <h2>Full Installment Plan</h2>
                         </div>
                         <div class="info">

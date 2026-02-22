@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { AuthRequest } from '../middleware/auth.middleware';
 import * as customerService from '../services/customer.service';
 
 export const createCustomer = async (req: Request, res: Response) => {

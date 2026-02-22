@@ -5,11 +5,13 @@ import { authenticate, authorize } from '../middleware/auth.middleware';
 const router = Router();
 
 router.post('/', authenticate, authorize(['SUPER_ADMIN', 'SHOP_ADMIN']), purchaseController.createPurchase);
-router.get('/', authenticate, authorize(['SUPER_ADMIN', 'SHOP_ADMIN', 'SALES_USER']), purchaseController.getAllPurchases);
+router.get('/', authenticate, authorize(['SUPER_ADMIN', 'SHOP_ADMIN']), purchaseController.getAllPurchases);
 
 // Suppliers
 router.post('/suppliers', authenticate, authorize(['SUPER_ADMIN', 'SHOP_ADMIN']), purchaseController.createSupplier);
-router.get('/suppliers', authenticate, authorize(['SUPER_ADMIN', 'SHOP_ADMIN', 'SALES_USER']), purchaseController.getAllSuppliers);
+router.get('/suppliers', authenticate, authorize(['SUPER_ADMIN', 'SHOP_ADMIN']), purchaseController.getAllSuppliers);
+router.patch('/suppliers/:id/clear-balance', authenticate, authorize(['SUPER_ADMIN', 'SHOP_ADMIN']), purchaseController.clearSupplierBalance);
 
-router.get('/:id', authenticate, authorize(['SUPER_ADMIN', 'SHOP_ADMIN', 'SALES_USER']), purchaseController.getPurchaseById);
+router.get('/:id', authenticate, authorize(['SUPER_ADMIN', 'SHOP_ADMIN']), purchaseController.getPurchaseById);
+router.patch('/:id/clear-balance', authenticate, authorize(['SUPER_ADMIN', 'SHOP_ADMIN']), purchaseController.clearPurchaseBalance);
 export default router;

@@ -3,6 +3,7 @@ import { verifyToken } from '../utils/jwt.utils';
 
 export interface AuthRequest extends Request {
     user?: any;
+    shopId?: number;
 }
 
 export const authenticate = (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -21,6 +22,13 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
     }
 
     req.user = decoded;
+
+    // Extract shopId from header if present
+    const shopIdHeader = req.headers['x-shop-id'];
+    if (shopIdHeader) {
+        req.shopId = Number(shopIdHeader);
+    }
+
     next();
 };
 

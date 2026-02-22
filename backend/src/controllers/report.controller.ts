@@ -1,48 +1,84 @@
 import { Request, Response } from 'express';
+import { AuthRequest } from '../middleware/auth.middleware';
 import * as reportService from '../services/report.service';
 
-export const getDashboard = async (req: Request, res: Response) => {
+export const getDashboard = async (req: AuthRequest, res: Response) => {
     try {
-        const stats = await reportService.getDashboardStats();
+        const filters: any = {};
+        if (req.user.role !== 'SUPER_ADMIN') {
+            filters.shopId = req.user.shopId;
+        } else if (req.shopId) {
+            filters.shopId = req.shopId;
+        }
+        const stats = await reportService.getDashboardStats(filters);
         res.json(stats);
     } catch (error: any) {
         res.status(500).json({ message: error.message });
     }
 };
 
-export const getSalesReport = async (req: Request, res: Response) => {
+export const getSalesReport = async (req: AuthRequest, res: Response) => {
     try {
         const { startDate, endDate } = req.query;
         if (!startDate || !endDate) return res.status(400).json({ message: 'Start and End dates required' });
 
-        const report = await reportService.getSalesReport(new Date(String(startDate)), new Date(String(endDate)));
+        const filters: any = {
+            startDate: new Date(String(startDate)),
+            endDate: new Date(String(endDate))
+        };
+        if (req.user.role !== 'SUPER_ADMIN') {
+            filters.shopId = req.user.shopId;
+        } else if (req.shopId) {
+            filters.shopId = req.shopId;
+        }
+
+        const report = await reportService.getSalesReport(filters);
         res.json(report);
     } catch (error: any) {
         res.status(500).json({ message: error.message });
     }
 };
 
-export const getStockReport = async (req: Request, res: Response) => {
+export const getStockReport = async (req: AuthRequest, res: Response) => {
     try {
-        const report = await reportService.getStockReport();
+        const filters: any = {};
+        if (req.user.role !== 'SUPER_ADMIN') {
+            filters.shopId = req.user.shopId;
+        } else if (req.shopId) {
+            filters.shopId = req.shopId;
+        }
+        const report = await reportService.getStockReport(filters);
         res.json(report);
     } catch (error: any) {
         res.status(500).json({ message: error.message });
     }
 };
 
-export const getInstallmentDueReport = async (req: Request, res: Response) => {
+export const getInstallmentDueReport = async (req: AuthRequest, res: Response) => {
     try {
-        const report = await reportService.getInstallmentDueReport(req.query);
+        const filters: any = { ...req.query };
+        if (req.user.role !== 'SUPER_ADMIN') {
+            filters.shopId = req.user.shopId;
+        } else if (req.shopId) {
+            filters.shopId = req.shopId;
+        }
+        const report = await reportService.getInstallmentDueReport(filters);
         res.json(report);
     } catch (error: any) {
         res.status(500).json({ message: error.message });
     }
 };
 
-export const getCustomerInstallmentSummary = async (req: Request, res: Response) => {
+export const getCustomerInstallmentSummary = async (req: AuthRequest, res: Response) => {
     try {
-        const report = await reportService.getCustomerInstallmentSummary(req.query);
+        const filters: any = { ...req.query };
+        if (req.user.role !== 'SUPER_ADMIN') {
+            filters.shopId = req.user.shopId;
+        } else if (req.shopId) {
+            filters.shopId = req.shopId;
+        }
+        console.log('Customer Installment Summary filters:', filters);
+        const report = await reportService.getCustomerInstallmentSummary(filters);
         res.json(report);
     } catch (error: any) {
         res.status(500).json({ message: error.message });

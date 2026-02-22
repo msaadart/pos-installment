@@ -6,7 +6,10 @@ export const createExpense = async (data: any) => {
 
 export const getAllExpenses = async (filters: any) => {
     return await prisma.expense.findMany({
-        where: filters,
+        where: {
+            ...filters,
+            isActive: true
+        },
         include: {
             shop: { select: { name: true } }
         },
@@ -22,5 +25,8 @@ export const getExpenseById = async (id: number) => {
 };
 
 export const deleteExpense = async (id: number) => {
-    return await prisma.expense.delete({ where: { id } });
+    return await prisma.expense.update({
+        where: { id },
+        data: { isActive: false }
+    });
 };

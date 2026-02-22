@@ -3,6 +3,13 @@ import prisma from '../utils/prisma';
 export const createSale = async (data: any) => {
     const { shopId, userId, customerId, items, discount, paymentMethod, saleType, paidAmount } = data;
 
+    // Check if customer is active
+    if (customerId) {
+        const customer = await prisma.customer.findUnique({ where: { id: customerId } });
+        if (!customer) throw new Error('Customer not found');
+        if (!customer.isActive) throw new Error('Cannot make a sale to an inactive customer');
+    }
+
     // Calculate totals
     let totalAmount = 0;
 

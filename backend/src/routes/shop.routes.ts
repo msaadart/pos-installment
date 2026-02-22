@@ -5,7 +5,7 @@ import { authenticate, authorize } from '../middleware/auth.middleware';
 const router = Router();
 
 // Public routes (if any)
-router.get('/', authenticate, authorize(['SUPER_ADMIN', 'SHOP_ADMIN']), getAllShops);
+router.get('/', authenticate, authorize(['SUPER_ADMIN', 'SHOP_ADMIN', 'SALES_USER']), getAllShops);
 router.get('/:id', authenticate, getShopById);
 
 // Protected routes

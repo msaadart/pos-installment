@@ -1,5 +1,8 @@
 import { Request, Response } from 'express';
+import { AuthRequest } from '../middleware/auth.middleware';
 import * as installmentService from '../services/installment.service';
+import * as expenseService from '../services/expense.service';
+import * as customerService from '../services/customer.service';
 
 export const createInstallmentSale = async (req: Request, res: Response) => {
     try {
@@ -10,9 +13,15 @@ export const createInstallmentSale = async (req: Request, res: Response) => {
     }
 };
 
-export const getInstallmentPlans = async (req: Request, res: Response) => {
+export const getInstallmentPlans = async (req: AuthRequest, res: Response) => {
     try {
-        const plans = await installmentService.getInstallmentPlans(req.query);
+        const filters: any = { ...req.query };
+        if (req.user.role !== 'SUPER_ADMIN') {
+            filters.shopId = req.user.shopId;
+        } else if (req.shopId) {
+            filters.shopId = req.shopId;
+        }
+        const plans = await installmentService.getInstallmentPlans(filters);
         res.json(plans);
     } catch (error: any) {
         res.status(500).json({ message: error.message });

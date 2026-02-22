@@ -15,11 +15,13 @@ import { AuthService } from '../../services/auth.service';
     <div class="container" style="padding-top: 2rem;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
         <h2>Product Management</h2>
+        @if(user?.role === 'SUPER_ADMIN' || user?.role === 'SHOP_ADMIN'){
         <div>
             <button class="btn btn-secondary" style="margin-right: 0.5rem;" (click)="showCategoryForm = !showCategoryForm">Add Category</button>
             <button class="btn btn-secondary" style="margin-right: 0.5rem;" (click)="showBrandForm = !showBrandForm">Add Brand</button>
             <button class="btn btn-primary" (click)="toggleForm()">New Product</button>
         </div>
+    }
       </div>
 
       <!-- Category Form -->

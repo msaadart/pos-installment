@@ -13,6 +13,9 @@ import { AuthService } from '../../services/auth.service';
     <div class="container" style="padding-top: 2rem;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
         <h2>Expense Management</h2>
+        <div *ngIf="user?.role === 'SUPER_ADMIN'" style="color: var(--text-muted); font-size: 0.9rem;">
+            Viewing expenses for: {{ authService.getSelectedShopId() || 'All Shops' }}
+        </div>
         <button class="btn btn-primary" (click)="toggleForm()">New Expense</button>
       </div>
 
@@ -65,7 +68,9 @@ import { AuthService } from '../../services/auth.service';
                     <td style="padding: 1rem; color: red;">Rs. {{ e.amount | number:'1.2-2' }}</td>
                     <td style="padding: 1rem;">{{ e.shop?.name }}</td>
                     <td style="padding: 1rem;">
-                        <button class="btn btn-secondary" style="background: red; font-size: 0.8rem;" (click)="deleteExpense(e.id)">Delete</button>
+                     @if(user?.role === 'SUPER_ADMIN' || user?.role === 'SHOP_ADMIN'){
+                        <button class="btn btn-secondary" style="background: var(--danger); font-size: 0.8rem;" (click)="deleteExpense(e.id)">Deactivate</button>
+                    }
                     </td>
                 </tr>
             </tbody>
@@ -84,7 +89,7 @@ export class ExpensesComponent implements OnInit {
     constructor(
         private expenseService: ExpenseService,
         private shopService: ShopService,
-        private authService: AuthService,
+        public authService: AuthService,
         private fb: FormBuilder
     ) {
         this.expenseForm = this.fb.group({
@@ -96,17 +101,17 @@ export class ExpensesComponent implements OnInit {
     }
 
     ngOnInit() {
-        this.loadData();
-         if (this.user?.role !== 'SUPER_ADMIN') {
+        if (this.user?.role !== 'SUPER_ADMIN') {
             this.expenseForm.patchValue({ shopId: this.user.shopId });
             this.expenseForm.get('shopId')?.disable();
         } else {
             this.expenseForm.get('shopId')?.enable();
         }
+        this.loadData();
     }
 
     loadData() {
-        this.expenseService.getAllExpenses().subscribe(data => this.expenses = data);
+        this.expenseService.getAllExpenses(this.user.shopId).subscribe(data => this.expenses = data);
         this.shopService.getAllShops().subscribe(data => this.shops = data);
     }
 
@@ -115,8 +120,10 @@ export class ExpensesComponent implements OnInit {
     }
 
     deleteExpense(id: number) {
-        if (confirm('Are you sure you want to delete this expense?')) {
-            this.expenseService.deleteExpense(id).subscribe(() => this.loadData());
+        if (confirm('Are you sure you want to deactivate this expense? It will be marked as inactive.')) {
+            this.expenseService.deleteExpense(id).subscribe(() => {
+                this.loadData();
+            });
         }
     }
 
@@ -126,7 +133,7 @@ export class ExpensesComponent implements OnInit {
         const data = {
             ...this.expenseForm.value,
             userId: this.authService.getCurrentUser()?.id,
-            shopId:  this.user?.role !== 'SUPER_ADMIN' ? this.user.shopId : Number(this.expenseForm.value.shopId)
+            shopId: this.user?.role !== 'SUPER_ADMIN' ? this.user.shopId : Number(this.expenseForm.value.shopId)
         };
 
         this.expenseService.createExpense(data).subscribe(() => {

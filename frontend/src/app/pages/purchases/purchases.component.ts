@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
+import { ToastrService } from 'ngx-toastr';
 import { PurchaseService } from '../../services/purchase.service';
 import { ProductService } from '../../services/product.service';
 import { ShopService } from '../../services/shop.service';
@@ -37,16 +38,26 @@ import { AuthService } from '../../services/auth.service';
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                 <div class="form-group">
                     <label class="form-label">Supplier</label>
-                    <select class="form-control" formControlName="supplierId">
-                        <option *ngFor="let s of suppliers" [value]="s.id">{{ s.name }}</option>
+                    <select class="form-control" formControlName="supplierId" [class.is-invalid]="purchaseForm.get('supplierId')?.invalid && purchaseForm.get('supplierId')?.touched">
+                        <option *ngFor="let s of suppliers" [value]="s.id">{{ s.name }} (Bal: Rs. {{s.balance}})</option>
                     </select>
+                    <div class="invalid-feedback" *ngIf="purchaseForm.get('supplierId')?.invalid && purchaseForm.get('supplierId')?.touched">
+                        Supplier is required
+                    </div>
                 </div>
                 
+                <!--<div *ngIf="purchaseForm.get('supplierId')?.value" style="display: flex; align-items: flex-end; margin-bottom: 1rem;">
+                    <button type="button" class="btn btn-warning" (click)="clearBalance()" *ngIf="getSelectedSupplierBalance() > 0">Clear Supplier Balance</button>
+                </div>-->
+                
                 <div class="form-group">
-                    <label class="form-label">Shop</label>
-                    <select class="form-control" formControlName="shopId" >
+                    <label class="form-label">Shop (Destination)</label>
+                    <select class="form-control" formControlName="shopId" [class.is-invalid]="purchaseForm.get('shopId')?.invalid && purchaseForm.get('shopId')?.touched">
                         <option *ngFor="let shop of shops" [value]="shop.id">{{ shop.name }}</option>
                     </select>
+                    <div class="invalid-feedback" *ngIf="purchaseForm.get('shopId')?.invalid && purchaseForm.get('shopId')?.touched">
+                        Shop is required
+                    </div>
                 </div>
                 
             </div>
@@ -98,7 +109,7 @@ import { AuthService } from '../../services/auth.service';
       </div>
 
       <!-- Purchase List -->
-      <div class="card">
+      <div class="card" style="margin-top: 1rem;">
         <table style="width: 100%; border-collapse: collapse;">
             <thead>
                 <tr style="text-align: left; border-bottom: 1px solid var(--border-color);">
@@ -122,6 +133,30 @@ import { AuthService } from '../../services/auth.service';
             </tbody>
         </table>
       </div>
+
+      <!-- Clear Balance Section -->
+      <div class="card" style="margin-top: 2rem;">
+        <h3>Clear Remaining Amount</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; align-items: end;">
+            <div class="form-group">
+                <label class="form-label">Select Supplier</label>
+                <select class="form-control" [(ngModel)]="clearBalSupplierId" (change)="onClearBalSupplierChange()">
+                    <option *ngFor="let s of suppliers" [value]="s.id">{{ s.name }} (Bal: Rs. {{s.balance}})</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Select Purchase</label>
+                <select class="form-control" [(ngModel)]="clearBalPurchaseId">
+                    <option *ngFor="let p of filteredPurchasesForClearBal" [value]="p.id">Inv: {{ p.invoiceNo }} (Bal: Rs. {{p.balance}})</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Clear Amount</label>
+                <input type="number" class="form-control" [(ngModel)]="clearBalAmount">
+            </div>
+        </div>
+        <button class="btn btn-primary" style="margin-top: 1rem;" (click)="submitClearPurchaseBalance()" [disabled]="!clearBalPurchaseId || !clearBalAmount">Submit Payment</button>
+      </div>
     </div>
   `,
     styles: [`
@@ -138,7 +173,14 @@ export class PurchasesComponent implements OnInit {
     purchaseForm: FormGroup;
     showForm = false;
     showSupplierForm = false;
+    private toastr = inject<ToastrService>(ToastrService);
     newSupplier = { name: '', phone: '' };
+
+    // Clear Balance State
+    clearBalSupplierId: number | null = null;
+    clearBalPurchaseId: number | null = null;
+    clearBalAmount: number = 0;
+    filteredPurchasesForClearBal: any[] = [];
 
     purchaseItems: any[] = [];
     currentItem = { productId: null, quantity: 1, costPrice: 0 };
@@ -182,15 +224,49 @@ export class PurchasesComponent implements OnInit {
     addSupplier() {
         if (!this.newSupplier.name) return;
         this.purchaseService.createSupplier(this.newSupplier).subscribe(() => {
+            this.toastr.success('Supplier added successfully');
             this.loadData();
             this.showSupplierForm = false;
             this.newSupplier = { name: '', phone: '' };
         });
     }
 
+    getSelectedSupplierBalance() {
+        const id = this.purchaseForm.get('supplierId')?.value;
+        return this.suppliers.find(s => s.id == id)?.balance || 0;
+    }
+
+    clearBalance() {
+        const id = this.purchaseForm.get('supplierId')?.value;
+        if (!id) return;
+        if (confirm('Are you sure you want to clear the entire balance for this supplier?')) {
+            this.purchaseService.clearSupplierBalance(Number(id)).subscribe(() => {
+                this.toastr.success('Supplier balance cleared');
+                this.loadData();
+            });
+        }
+    }
+
+    onClearBalSupplierChange() {
+        if (!this.clearBalSupplierId) return;
+        this.purchaseService.getAllPurchases(Number(this.clearBalSupplierId)).subscribe(data => {
+            this.filteredPurchasesForClearBal = data.filter((p: any) => Number(p.balance) > 0);
+        });
+    }
+
+    submitClearPurchaseBalance() {
+        if (!this.clearBalPurchaseId || !this.clearBalAmount) return;
+        this.purchaseService.clearPurchaseBalance(Number(this.clearBalPurchaseId), this.clearBalAmount).subscribe(() => {
+            this.toastr.success('Purchase balance updated successfully');
+            this.clearBalAmount = 0;
+            this.clearBalPurchaseId = null;
+            this.loadData();
+        });
+    }
+
     addItem() {
         if (!this.currentItem.productId || this.currentItem.quantity <= 0) return;
-        this.purchaseItems.push({ ...this.currentItem, productId: Number(this.currentItem.productId)});
+        this.purchaseItems.push({ ...this.currentItem, productId: Number(this.currentItem.productId) });
         this.currentItem = { productId: null, quantity: 1, costPrice: 0 };
     }
 
@@ -207,18 +283,25 @@ export class PurchasesComponent implements OnInit {
     }
 
     onSubmit() {
-        if (this.purchaseForm.invalid || this.purchaseItems.length === 0) return;
+        if (this.purchaseForm.invalid || this.purchaseItems.length === 0) {
+            this.purchaseForm.markAllAsTouched();
+            if (this.purchaseItems.length === 0) {
+                this.toastr.warning('Please add at least one item');
+            }
+            return;
+        }
 
         const data = {
             ...this.purchaseForm.value,
-            shopId:  this.user?.role !== 'SUPER_ADMIN' ? this.user.shopId : Number(this.purchaseForm.value.shopId),
-            supplierId : Number(this.purchaseForm.value.supplierId),
+            shopId: this.user?.role !== 'SUPER_ADMIN' ? this.user.shopId : Number(this.purchaseForm.value.shopId),
+            supplierId: Number(this.purchaseForm.value.supplierId),
             totalAmount: this.calculateTotal(),
             userId: this.authService.getCurrentUser()?.id,
             items: this.purchaseItems
         };
 
         this.purchaseService.createPurchase(data).subscribe(() => {
+            this.toastr.success('Purchase created successfully');
             this.loadData();
             this.toggleForm();
             this.purchaseForm.reset();

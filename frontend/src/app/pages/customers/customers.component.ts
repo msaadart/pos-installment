@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
 import { CustomerService } from '../../services/customer.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
     selector: 'app-customers',
@@ -72,8 +73,10 @@ import { CustomerService } from '../../services/customer.service';
               <td style="padding: 1rem;">{{ c.cnic || '-' }}</td>
               <td style="padding: 1rem;">Rs. {{ c.balance | number:'1.2-2' }}</td>
               <td style="padding: 1rem;">
+              @if(user?.role === 'SUPER_ADMIN' || user?.role === 'SHOP_ADMIN'){
                 <button class="btn btn-secondary" style="font-size: 0.8rem; margin-right: 0.5rem;" (click)="editCustomer(c)">Edit</button>
                 <button class="btn btn-danger" style="font-size: 0.8rem;" (click)="deleteCustomer(c.id)">Inactive</button>
+              }
               </td>
             </tr>
             <tr *ngIf="filteredCustomers.length === 0">
@@ -93,8 +96,9 @@ export class CustomersComponent implements OnInit {
     editMode = false;
     selectedCustomerId: number | null = null;
     searchTerm = '';
+    user: any = this.authService.getCurrentUser();
 
-    constructor(private customerService: CustomerService, private fb: FormBuilder) {
+    constructor(private customerService: CustomerService, private fb: FormBuilder, public authService: AuthService) {
         this.customerForm = this.fb.group({
             name: ['', Validators.required],
             phone: ['', Validators.required],
@@ -161,7 +165,7 @@ export class CustomersComponent implements OnInit {
     onSubmit() {
         if (this.customerForm.invalid) return;
 
-        const data = this.customerForm.value;
+        const data = {...this.customerForm.value, shopId: this.user?.shopId};
         if (this.editMode && this.selectedCustomerId) {
             this.customerService.updateCustomer(this.selectedCustomerId, data).subscribe(() => {
                 this.loadCustomers();

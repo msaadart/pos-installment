@@ -7,7 +7,7 @@ import { environment } from '../../environments/environment';
     providedIn: 'root'
 })
 export class PurchaseService {
-    private apiUrl = environment.apiUrl+'/purchases';
+    private apiUrl = environment.apiUrl + '/purchases';
 
     constructor(private http: HttpClient) { }
 
@@ -15,13 +15,28 @@ export class PurchaseService {
         return this.http.post(this.apiUrl, purchaseData);
     }
 
-    getAllPurchases(shopId?: number): Observable<any[]> {
-        const url = shopId ? `${this.apiUrl}?shopId=${shopId}` : this.apiUrl;
+    getAllPurchases(supplierId?: number): Observable<any[]> {
+        let url = this.apiUrl;
+        if (supplierId) {
+            url += `?supplierId=${supplierId}`;
+        }
         return this.http.get<any[]>(url);
     }
 
     getPurchaseById(id: number): Observable<any> {
         return this.http.get<any>(`${this.apiUrl}/${id}`);
+    }
+
+    deleteSupplier(id: number): Observable<any> {
+        return this.http.delete(`${this.apiUrl}/suppliers/${id}`);
+    }
+
+    clearSupplierBalance(id: number): Observable<any> {
+        return this.http.patch(`${this.apiUrl}/suppliers/${id}/clear-balance`, {});
+    }
+
+    clearPurchaseBalance(id: number, amount: number): Observable<any> {
+        return this.http.patch(`${this.apiUrl}/${id}/clear-balance`, { amount });
     }
 
     getAllSuppliers(): Observable<any[]> {

@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { AuthRequest } from '../middleware/auth.middleware';
 import * as saleService from '../services/sale.service';
 
 export const createSale = async (req: Request, res: Response) => {
@@ -10,7 +11,7 @@ export const createSale = async (req: Request, res: Response) => {
     }
 };
 
-export const getAllSales = async (req: Request, res: Response) => {
+export const getAllSales = async (req: AuthRequest, res: Response) => {
     try {
         const filters: any = {};
         if (req.query.shopId) filters.shopId = Number(req.query.shopId);

@@ -1,10 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ProductService } from '../../services/product.service';
 import { SalesService } from '../../services/sales.service';
 import { AuthService } from '../../services/auth.service';
 import { CustomerService } from '../../services/customer.service';
+import { ToastrService } from 'ngx-toastr';
 import { FormsModule } from '@angular/forms';
 import { NgOptimizedImage } from '@angular/common';
 import { environment } from '../../../environments/environment.development';
@@ -67,9 +68,12 @@ import { environment } from '../../../environments/environment.development';
            
                 <div class="form-group">
                     <label class="form-label">Customer</label>
-                    <select class="form-control" [(ngModel)]="selectedCustomerId">
-                        <option *ngFor="let customer of customers" [value]="customer.id">{{ customer.name }} ({{ customer.phone }})</option>
+                    <select class="form-control" [(ngModel)]="selectedCustomerId" [class.is-invalid]="submitted && !selectedCustomerId">
+                        <option *ngFor="let customer of activeCustomers" [value]="customer.id">{{ customer.name }} ({{ customer.phone }})</option>
                     </select>
+                    <div class="invalid-feedback" *ngIf="submitted && !selectedCustomerId">
+                        Customer is required
+                    </div>
                 </div>
                 <div *ngIf="saleType === 'INSTALLMENT'">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
@@ -107,8 +111,11 @@ export class PosComponent implements OnInit {
     products: any[] = [];
     filteredProducts: any[] = [];
     customers: any[] = [];
+    activeCustomers: any[] = [];
     cart: any[] = [];
     user: any;
+    submitted = false;
+    private toastr = inject<ToastrService>(ToastrService);
 
     saleType: 'CASH' | 'INSTALLMENT' = 'CASH';
     selectedCustomerId: number | null = null;
@@ -129,7 +136,10 @@ export class PosComponent implements OnInit {
             this.products = data;
             this.filteredProducts = data;
         });
-        this.customerService.getAllCustomers().subscribe(data => this.customers = data);
+        this.customerService.getAllCustomers().subscribe(data => {
+            this.customers = data;
+            this.activeCustomers = data.filter(c => c.isActive);
+        });
         this.authService.currentUser$.subscribe(u => this.user = u);
     }
 
@@ -139,11 +149,17 @@ export class PosComponent implements OnInit {
     }
 
     addToCart(product: any) {
-        if (product.stock <= 0) return alert('Out of stock!');
+        if (product.stock <= 0) {
+            this.toastr.warning('Out of stock!');
+            return;
+        }
 
         const existing = this.cart.find(item => item.product.id === product.id);
         if (existing) {
-            if (existing.quantity >= product.stock) return alert('No more stock!');
+            if (existing.quantity >= product.stock) {
+                this.toastr.warning('No more stock!');
+                return;
+            }
             existing.quantity++;
         } else {
             this.cart.push({ product, quantity: 1 });
@@ -159,6 +175,14 @@ export class PosComponent implements OnInit {
     }
 
     checkout() {
+        this.submitted = true;
+        if (!this.selectedCustomerId || this.cart.length === 0) {
+            if (this.cart.length === 0) {
+                this.toastr.warning('Your cart is empty');
+            }
+            return;
+        }
+
         if (!this.user) return;
 
         const saleData: any = {
@@ -182,16 +206,19 @@ export class PosComponent implements OnInit {
 
         this.salesService.createSale(saleData).subscribe({
             next: () => {
-                alert('Sale Completed!');
+                this.toastr.success('Sale Completed!');
                 this.cart = [];
                 this.downPayment = 0;
                 this.selectedCustomerId = null;
+                this.submitted = false;
                 this.productService.getAllProducts().subscribe(data => {
                     this.products = data;
                     this.filteredProducts = data;
                 });
             },
-            error: (err) => alert('Sale Failed: ' + err.message)
+            error: (err) => {
+                // errorInterceptor will handle showing the toaster
+            }
         });
     }
 }

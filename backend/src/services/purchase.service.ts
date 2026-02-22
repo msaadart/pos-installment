@@ -103,3 +103,39 @@ export const deleteSupplier = async (id: number) => {
         data: { isActive: false }
     });
 };
+
+export const clearSupplierBalance = async (id: number) => {
+    return await prisma.supplier.update({
+        where: { id },
+        data: { balance: 0 }
+    });
+};
+
+export const clearPurchaseBalance = async (purchaseId: number, amount: number) => {
+    return await prisma.$transaction(async (prisma: any) => {
+        const purchase = await prisma.purchase.findUnique({ where: { id: purchaseId } });
+        if (!purchase) throw new Error('Purchase not found');
+
+        const newPaidAmount = Number(purchase.paidAmount) + amount;
+        const newBalance = Number(purchase.totalAmount) - newPaidAmount;
+
+        // 1. Update Purchase
+        await prisma.purchase.update({
+            where: { id: purchaseId },
+            data: {
+                paidAmount: newPaidAmount,
+                balance: newBalance
+            }
+        });
+
+        // 2. Update Supplier Balance
+        await prisma.supplier.update({
+            where: { id: purchase.supplierId },
+            data: {
+                balance: { decrement: amount }
+            }
+        });
+
+        return { success: true };
+    });
+};

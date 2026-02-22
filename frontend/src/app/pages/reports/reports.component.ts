@@ -134,13 +134,14 @@ import { ReportService } from '../../services/report.service';
     </div>
   `,
     styles: [`
-    @media print {
+    @media print { 
       .tabs, .btn, .form-control, h2 { display: none !important; }
       .container { padding: 0 !important; }
       .card { border: none !important; box-shadow: none !important; padding: 0 !important; }
       table { border-collapse: collapse !important; width: 100% !important; margin: 0 !important; }
-      th, td { border: 1px solid #ddd !important; padding: 8px !important; font-size: 10pt !important; }
-      h3 { display: block !important; text-align: center; margin-bottom: 20px !important; }
+      th, td { border: 1px solid #ddd !important; padding: 2px !important; font-size: 8pt !important; }
+      h3 { display: block !important; text-align: center; margin-bottom: 5px !important; }
+      ::ng-deep .sidebar { display: none !important; }
     }
   `]
 })

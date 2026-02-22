@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { AuthRequest } from '../middleware/auth.middleware';
 import * as expenseService from '../services/expense.service';
 
 export const createExpense = async (req: Request, res: Response) => {
