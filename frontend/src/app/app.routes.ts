@@ -1,15 +1,6 @@
 import { Routes } from '@angular/router';
 import { LoginComponent } from './pages/login/login.component';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
-import { ShopsComponent } from './pages/shops/shops.component';
-import { UsersComponent } from './pages/users/users.component';
-import { ProductsComponent } from './pages/products/products.component';
-import { PosComponent } from './pages/pos/pos.component';
-import { InstallmentsComponent } from './pages/installments/installments.component';
-import { ReportsComponent } from './pages/reports/reports.component';
-import { PurchasesComponent } from './pages/purchases/purchases.component';
-import { ExpensesComponent } from './pages/expenses/expenses.component';
-import { CustomersComponent } from './pages/customers/customers.component';
 import { MainLayoutComponent } from './layouts/main-layout/main-layout.component';
 import { authGuard } from './guards/auth.guard';
 import { roleGuard } from './guards/role.guard';
@@ -24,28 +15,41 @@ export const routes: Routes = [
             { path: 'dashboard', component: DashboardComponent },
             {
                 path: 'shops',
-                component: ShopsComponent,
+                loadComponent: () => import('./pages/shops/shops.component')
+                    .then(m => m.ShopsComponent),
                 canActivate: [roleGuard],
                 data: { roles: ['SUPER_ADMIN'] }
             },
             {
                 path: 'users',
-                component: UsersComponent,
+                loadComponent: () => import('./pages/users/users.component')
+                    .then(m => m.UsersComponent),
                 canActivate: [roleGuard],
-                data: { roles: ['SUPER_ADMIN', 'SHOP_ADMIN'] }
+                data: { roles: ['SUPER_ADMIN'] }
             },
-            { path: 'products', component: ProductsComponent },
-            { path: 'pos', component: PosComponent },
-            { path: 'installments', component: InstallmentsComponent },
+            {
+                path: 'products',
+                loadComponent: () => import('./pages/products/products.component')
+                    .then(m => m.ProductsComponent)
+            },
+            { path: 'pos', loadComponent: () => import('./pages/pos/pos.component').then(m => m.PosComponent) },
+            { path: 'installments', loadComponent: () => import('./pages/installments/installments.component').then(m => m.InstallmentsComponent) },
             {
                 path: 'reports',
-                component: ReportsComponent,
+                loadComponent: () => import('./pages/reports/reports.component')
+                    .then(m => m.ReportsComponent),
                 canActivate: [roleGuard],
                 data: { roles: ['SUPER_ADMIN', 'SHOP_ADMIN'] }
             },
-            { path: 'purchases', component: PurchasesComponent },
-            { path: 'expenses', component: ExpensesComponent },
-            { path: 'customers', component: CustomersComponent },
+            {
+                path: 'purchases',
+                loadComponent: () => import('./pages/purchases/purchases.component')
+                   .then(m => m.PurchasesComponent),
+                canActivate: [roleGuard],
+                data: { roles: ['SUPER_ADMIN', 'SHOP_ADMIN'] }
+            },
+            { path: 'expenses', loadComponent: () => import('./pages/expenses/expenses.component').then(m => m.ExpensesComponent) },
+            { path: 'customers', loadComponent: () => import('./pages/customers/customers.component').then(m => m.CustomersComponent) },
             { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
         ]
     },
