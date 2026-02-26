@@ -11,15 +11,26 @@ import { FormsModule } from '@angular/forms';
     <div class="container" style="padding-top: 2rem;">
       <h2 style="margin-bottom: 2rem;">Installment Plans</h2>
 
-      <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+      <div class="card" style="display: flex; gap: 1rem; margin-bottom: 2rem; align-items: flex-end;">
         <div style="flex: 1;">
+            <label class="form-label" style="font-size: 0.8rem;">Phone</label>
             <input type="text" class="form-control" placeholder="Search by Phone..." [(ngModel)]="searchPhone">
         </div>
         <div style="flex: 1;">
+            <label class="form-label" style="font-size: 0.8rem;">CNIC</label>
             <input type="text" class="form-control" placeholder="Search by CNIC..." [(ngModel)]="searchCNIC">
+        </div>
+        <div style="flex: 1;">
+            <label class="form-label" style="font-size: 0.8rem;">Status</label>
+            <select class="form-control" [(ngModel)]="searchStatus">
+                <option value="">All Statuses</option>
+                <option value="ACTIVE">ACTIVE</option>
+                <option value="COMPLETED">COMPLETED</option>
+            </select>
         </div>
         <div>
             <button class="btn btn-primary" (click)="loadPlans()">Search</button>
+            <button class="btn btn-secondary" style="margin-left: 0.5rem;" (click)="resetFilters()">Clear</button>
         </div>
       </div>
 
@@ -27,26 +38,28 @@ import { FormsModule } from '@angular/forms';
         <table style="width: 100%; border-collapse: collapse;">
             <thead>
                 <tr style="text-align: left; border-bottom: 1px solid var(--border-color);">
-                    <th style="padding: 1rem;">ID</th>
-                    <th style="padding: 1rem;">Customer</th>
-                    <th style="padding: 1rem;">Total Amount</th>
-                    <th style="padding: 1rem;">Start Date</th>
-                    <th style="padding: 1rem;">Status</th>
-                    <th style="padding: 1rem;">Actions</th>
+                    <th style="padding: 0.5rem;">ID</th>
+                    <th style="padding: 0.5rem;">Customer</th>
+                    <th style="padding: 0.5rem;">Total Amount</th>
+                    <th style="padding: 0.5rem;">Start Date</th>
+                    <th style="padding: 0.5rem;">End Date</th>
+                    <th style="padding: 0.5rem;">Status</th>
+                    <th style="padding: 0.5rem;">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 <tr *ngFor="let plan of plans" style="border-bottom: 1px solid var(--border-color);">
-                    <td style="padding: 1rem;">{{ plan.id }}</td>
-                    <td style="padding: 1rem;">{{ plan.sale.customer?.name || 'Walk-in' }}</td>
-                    <td style="padding: 1rem;">Rs. {{ plan.totalAmount | number:'1.2-2' }}</td>
-                    <td style="padding: 1rem;">{{ plan.startDate | date }}</td>
-                    <td style="padding: 1rem;">
+                    <td style="padding: 0.5rem;">{{ plan.id }}</td>
+                    <td style="padding: 0.5rem;">{{ plan.sale.customer?.name || 'Walk-in' }} ({{ plan.sale.customer?.cnic || '-' }})</td>
+                    <td style="padding: 0.5rem;">Rs. {{ plan.totalAmount | number:'1.2-2' }}</td>
+                    <td style="padding: 0.5rem;">{{ plan.startDate | date }}</td>
+                    <td style="padding: 0.5rem;">{{ plan.endDate | date }}</td>
+                    <td style="padding: 0.5rem;">
                         <span [style.color]="plan.status === 'ACTIVE' ? 'var(--success)' : 'var(--text-muted)'">
                             {{ plan.status }}
                         </span>
                     </td>
-                    <td style="padding: 1rem;">
+                    <td style="padding: 0.5rem;">
                         <button class="btn btn-primary" style="margin-right: 0.5rem;" (click)="viewDetails(plan)">View</button>
                         <button class="btn btn-secondary" (click)="printFullPlan(plan)">Print Plan</button>
                     </td>
@@ -63,12 +76,13 @@ import { FormsModule } from '@angular/forms';
         </div>
         <div style="margin-top: 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
             <div>
-                <p><strong>Customer:</strong> {{ selectedPlan.sale.customer?.name }}</p>
+                <p><strong>Customer:</strong> {{ selectedPlan.sale.customer?.name }} </p>
                 <p><strong>Phone:</strong> {{ selectedPlan.sale.customer?.phone }}</p>
                 <p><strong>Monthly Installment:</strong> Rs. {{ selectedPlan.monthlyInstallment | number:'1.2-2' }}</p>
             </div>
             <div>
                 <p><strong>Total Amount:</strong> Rs. {{ selectedPlan.totalAmount | number:'1.2-2' }}</p>
+                <p><strong>Down Payment:</strong> Rs. {{ selectedPlan.downPayment | number:'1.2-2' }}</p>
                 <p><strong>Remaining Balance:</strong> Rs. {{ getRemaining(selectedPlan) | number:'1.2-2' }}</p>
             </div>
         </div>
@@ -177,6 +191,7 @@ export class InstallmentsComponent implements OnInit {
 
     searchPhone = '';
     searchCNIC = '';
+    searchStatus = '';
     currentReceipt: any = null;
 
     constructor(private installmentService: InstallmentService) { }
@@ -189,6 +204,7 @@ export class InstallmentsComponent implements OnInit {
         const filters: any = {};
         if (this.searchPhone) filters.phone = this.searchPhone;
         if (this.searchCNIC) filters.cnic = this.searchCNIC;
+        if (this.searchStatus) filters.status = this.searchStatus;
 
         this.installmentService.getInstallmentPlans(filters).subscribe(data => {
             this.plans = data;
@@ -196,6 +212,13 @@ export class InstallmentsComponent implements OnInit {
                 this.selectedPlan = this.plans.find(p => p.id === this.selectedPlan.id);
             }
         });
+    }
+
+    resetFilters() {
+        this.searchPhone = '';
+        this.searchCNIC = '';
+        this.searchStatus = '';
+        this.loadPlans();
     }
 
     viewDetails(plan: any) {
@@ -347,7 +370,7 @@ export class InstallmentsComponent implements OnInit {
                     </body>
                 </html>
             `);
-           printWindow.document.close();
+            printWindow.document.close();
         }
     }
 }

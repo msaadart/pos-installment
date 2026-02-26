@@ -6,6 +6,7 @@ const router = Router();
 
 router.post('/', authenticate, authorize(['SUPER_ADMIN', 'SHOP_ADMIN']), purchaseController.createPurchase);
 router.get('/', authenticate, authorize(['SUPER_ADMIN', 'SHOP_ADMIN']), purchaseController.getAllPurchases);
+router.get('/payments', authenticate, authorize(['SUPER_ADMIN', 'SHOP_ADMIN']), purchaseController.getAllPurchasePayments);
 
 // Suppliers
 router.post('/suppliers', authenticate, authorize(['SUPER_ADMIN', 'SHOP_ADMIN']), purchaseController.createSupplier);

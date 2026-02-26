@@ -5,6 +5,7 @@ import { ProductService } from '../../services/product.service';
 import { SalesService } from '../../services/sales.service';
 import { AuthService } from '../../services/auth.service';
 import { CustomerService } from '../../services/customer.service';
+import { ShopService } from '../../services/shop.service';
 import { ToastrService } from 'ngx-toastr';
 import { FormsModule } from '@angular/forms';
 import { NgOptimizedImage } from '@angular/common';
@@ -45,14 +46,16 @@ import { environment } from '../../../environments/environment.development';
             Cart is empty
         </div>
         
-        <div *ngFor="let item of cart" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
-            <div>
-                <div>{{ item.product.name }}</div>
-                <div style="font-size: 0.8rem;">{{ item.quantity }} x Rs. {{ item.product.price | number:'1.2-2' }}</div>
+        <div *ngFor="let item of cart; let i = index" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
+            <div style="flex-grow: 1;">
+                <div>{{ item.productName }}</div>
+                <div style="font-size: 0.8rem;">{{ item.quantity }} x 
+                    <input type="number" [(ngModel)]="item.price" style="width: 80px; padding: 2px; border: 1px solid var(--border-color); border-radius: 4px;">
+                </div>
             </div>
-            <div>
-                Rs. {{ (item.quantity * item.product.price) | number:'1.2-2' }}
-                <button class="btn btn-danger" style="padding: 0.1rem 0.3rem; margin-left: 0.5rem;" (click)="removeFromCart(item)">X</button>
+            <div style="display: flex; align-items: center;">
+                Rs. {{ (item.quantity * item.price) | number:'1.2-2' }}
+                <button class="btn btn-danger" style="padding: 0.1rem 0.3rem; margin-left: 0.5rem;" (click)="removeFromCart(i)">X</button>
             </div>
         </div>
 
@@ -113,7 +116,7 @@ export class PosComponent implements OnInit {
     customers: any[] = [];
     activeCustomers: any[] = [];
     cart: any[] = [];
-    user: any;
+    user: any = this.authService.getCurrentUser();
     submitted = false;
     private toastr = inject<ToastrService>(ToastrService);
 
@@ -123,24 +126,49 @@ export class PosComponent implements OnInit {
     duration: number = 6;
     apiUrl = environment.baseUrl;
 
+    // Added for shop selection, though not used in template yet
+    shops: any[] = [];
+    saleForm!: FormGroup; // Added saleForm
+
     constructor(
         private productService: ProductService,
         private salesService: SalesService,
         private authService: AuthService,
         private customerService: CustomerService,
-        private fb: FormBuilder
-    ) { }
+        private fb: FormBuilder,
+        private shopService: ShopService // Injected ShopService
+    ) {
+        // Initialize saleForm here
+        this.saleForm = this.fb.group({
+            customerId: [null, Validators.required],
+            shopId: [null, Validators.required]
+        });
+    }
 
     ngOnInit() {
+        this.loadInitialData();
+        // this.authService.currentUser$.subscribe(u => this.user = u);
+    }
+
+    loadInitialData() {
         this.productService.getAllProducts().subscribe(data => {
             this.products = data;
             this.filteredProducts = data;
         });
         this.customerService.getAllCustomers().subscribe(data => {
             this.customers = data;
-            this.activeCustomers = data.filter(c => c.isActive);
+            this.activeCustomers = data.filter((c: any) => c.isActive);
+            if (this.activeCustomers.length === 1) {
+                this.selectedCustomerId = this.activeCustomers[0].id;
+                this.saleForm.patchValue({ customerId: this.activeCustomers[0].id }); // Patching saleForm as well
+            }
         });
-        this.authService.currentUser$.subscribe(u => this.user = u);
+        this.shopService.getAllShops().subscribe(data => this.shops = data);
+
+        if (this.user?.role !== 'SUPER_ADMIN') {
+            this.saleForm.patchValue({ shopId: this.user.shopId });
+            this.saleForm.get('shopId')?.disable();
+        }
     }
 
     filterProducts(event: any) {
@@ -162,16 +190,22 @@ export class PosComponent implements OnInit {
             }
             existing.quantity++;
         } else {
-            this.cart.push({ product, quantity: 1 });
+            this.cart.push({
+                product,
+                quantity: 1,
+                price: Number(product.price),
+                productName: product.name
+            });
         }
     }
 
-    removeFromCart(item: any) {
-        this.cart = this.cart.filter(i => i !== item);
+
+    removeFromCart(index: number) {
+        this.cart.splice(index, 1);
     }
 
     get total() {
-        return this.cart.reduce((sum, item) => sum + (item.quantity * item.product.price), 0);
+        return this.cart.reduce((sum, item) => sum + (item.quantity * item.price), 0);
     }
 
     checkout() {
@@ -195,7 +229,7 @@ export class PosComponent implements OnInit {
             items: this.cart.map(item => ({
                 productId: item.product.id,
                 quantity: item.quantity,
-                price: item.product.price
+                price: item.price
             }))
         };
 

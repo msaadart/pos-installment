@@ -61,14 +61,7 @@ export const getAllProducts = async (req: AuthRequest, res: Response) => {
         }
 
         if (req.query.categoryId) filters.categoryId = Number(req.query.categoryId);
-
-        // Search by name or SKU
-        if (req.query.search) {
-            filters.OR = [
-                { name: { contains: String(req.query.search) } },
-                { sku: { contains: String(req.query.search) } }
-            ];
-        }
+        if (req.query.search) filters.search = String(req.query.search);
 
         const products = await productService.getAllProducts(filters);
         res.json(products);

@@ -10,6 +10,16 @@ export const getDashboard = async (req: AuthRequest, res: Response) => {
         } else if (req.shopId) {
             filters.shopId = req.shopId;
         }
+
+        const { startDate, endDate } = req.query;
+        if (startDate && endDate) {
+            filters.startDate = new Date(String(startDate));
+            filters.endDate = new Date(String(endDate));
+        }
+console.log('Dashboard filters:', filters);
+        // if (req.query.startDate) filters.startDate = new Date(req.query.startDate as string);
+        // if (req.query.endDate) filters.endDate = new Date(req.query.endDate as string);
+
         const stats = await reportService.getDashboardStats(filters);
         res.json(stats);
     } catch (error: any) {

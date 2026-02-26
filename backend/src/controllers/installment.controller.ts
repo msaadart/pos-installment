@@ -16,6 +16,11 @@ export const createInstallmentSale = async (req: Request, res: Response) => {
 export const getInstallmentPlans = async (req: AuthRequest, res: Response) => {
     try {
         const filters: any = { ...req.query };
+        if (req.query.search) filters.search = String(req.query.search);
+        if (req.query.phone) filters.phone = String(req.query.phone);
+        if (req.query.cnic) filters.cnic = String(req.query.cnic);
+        if (req.query.status) filters.status = String(req.query.status);
+
         if (req.user.role !== 'SUPER_ADMIN') {
             filters.shopId = req.user.shopId;
         } else if (req.shopId) {

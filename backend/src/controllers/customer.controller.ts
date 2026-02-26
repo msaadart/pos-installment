@@ -11,9 +11,17 @@ export const createCustomer = async (req: Request, res: Response) => {
     }
 };
 
-export const getAllCustomers = async (req: Request, res: Response) => {
+export const getAllCustomers = async (req: AuthRequest, res: Response) => {
     try {
-        const customers = await customerService.getAllCustomers();
+        const filters: any = {};
+        if (req.user.role !== 'SUPER_ADMIN') {
+            filters.shopId = req.user.shopId;
+        } else if (req.shopId) {
+            filters.shopId = req.shopId;
+        }
+        if (req.query.search) filters.search = String(req.query.search);
+
+        const customers = await customerService.getAllCustomers(filters);
         res.json(customers);
     } catch (error: any) {
         res.status(500).json({ message: error.message });

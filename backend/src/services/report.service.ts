@@ -1,38 +1,82 @@
 import prisma from '../utils/prisma';
 
 export const getDashboardStats = async (filters: any = {}) => {
-    const { shopId } = filters;
-    const where = shopId ? { shopId } : {};
+    const { shopId, startDate, endDate } = filters;
 
-    const totalSales = await prisma.sale.aggregate({
-        where,
-        _sum: { totalAmount: true }
-    });
-    const totalProducts = await prisma.product.count({ where });
-    const totalUsers = await prisma.user.count({ where });
-    const totalShops = await prisma.shop.count(); // Shops count is usually global
+    const baseFilter: any = {};
+    if (shopId) baseFilter.shopId = shopId;
 
-    // Recent Sales
-    const recentSales = await prisma.sale.findMany({
-        where,
-        take: 5,
-        orderBy: { createdAt: 'desc' },
-        include: { user: { select: { name: true } } }
-    });
+    // Date filter for models that use createdAt
+    const createdAtFilter: any = {};
+    if (startDate || endDate) {
+        createdAtFilter.createdAt = {};
+        if (startDate) createdAtFilter.createdAt.gte = new Date(startDate);
+        if (endDate) createdAtFilter.createdAt.lte = new Date(endDate);
+    }
 
-    const activeInstallmentsCount = await prisma.installmentPlan.count({
-        where: {
-            status: 'ACTIVE',
-            sale: where
-        }
-    });
+    // Date filter for Expense (uses `date` field)
+    const expenseDateFilter: any = {};
+    if (startDate || endDate) {
+        expenseDateFilter.date = {};
+        if (startDate) expenseDateFilter.date.gte = new Date(startDate);
+        if (endDate) expenseDateFilter.date.lte = new Date(endDate);
+    }
 
-    return {
-        totalSales: Number(totalSales._sum.totalAmount) || 0,
+    const [
+        activeInstallments,
+        totalCustomers,
+        totalSalesAggregate,
+        totalExpensesAggregate,
         totalProducts,
         totalUsers,
         totalShops,
-        activeInstallmentsCount,
+        recentSales
+    ] = await Promise.all([
+
+        prisma.installmentPlan.count({
+            where: { ...baseFilter, ...createdAtFilter, status: 'ACTIVE' }
+        }),
+
+        prisma.customer.count({
+            where: { ...baseFilter, ...createdAtFilter }
+        }),
+
+        prisma.sale.aggregate({
+            where: { ...baseFilter, ...createdAtFilter },
+            _sum: { totalAmount: true }
+        }),
+
+        prisma.expense.aggregate({
+            where: { ...baseFilter, ...expenseDateFilter, isActive: true },
+            _sum: { amount: true }
+        }),
+
+        prisma.product.count({
+            where: baseFilter
+        }),
+
+        prisma.user.count({
+            where: { ...baseFilter, ...createdAtFilter }
+        }),
+
+        prisma.shop.count(),
+
+        prisma.sale.findMany({
+            where: { ...baseFilter, ...createdAtFilter },
+            take: 200,
+            orderBy: { createdAt: 'desc' },
+            include: { user: { select: { name: true } } }
+        })
+    ]);
+
+    return {
+        totalSales: Number(totalSalesAggregate._sum?.totalAmount) || 0,
+        totalProducts,
+        totalUsers,
+        totalShops,
+        activeInstallmentsCount: activeInstallments,
+        totalCustomers,
+        totalExpenses: Number(totalExpensesAggregate._sum?.amount) || 0,
         recentSales
     };
 };
@@ -45,7 +89,8 @@ export const getSalesReport = async (filters: any) => {
             ...(shopId ? { shopId } : {})
         },
         include: { items: true, user: { select: { name: true } } },
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
+        take: 200
     });
 };
 

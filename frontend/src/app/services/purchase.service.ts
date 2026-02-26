@@ -15,12 +15,8 @@ export class PurchaseService {
         return this.http.post(this.apiUrl, purchaseData);
     }
 
-    getAllPurchases(supplierId?: number): Observable<any[]> {
-        let url = this.apiUrl;
-        if (supplierId) {
-            url += `?supplierId=${supplierId}`;
-        }
-        return this.http.get<any[]>(url);
+    getAllPurchases(filters: any = {}): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}`, { params: filters });
     }
 
     getPurchaseById(id: number): Observable<any> {
@@ -35,12 +31,19 @@ export class PurchaseService {
         return this.http.patch(`${this.apiUrl}/suppliers/${id}/clear-balance`, {});
     }
 
-    clearPurchaseBalance(id: number, amount: number): Observable<any> {
-        return this.http.patch(`${this.apiUrl}/${id}/clear-balance`, { amount });
+    clearPurchaseBalance(id: number, amount: number, method?: string, notes?: string): Observable<any> {
+        const body: any = { amount };
+        if (method) body.method = method;
+        if (notes) body.notes = notes;
+        return this.http.patch(`${this.apiUrl}/${id}/clear-balance`, body);
     }
 
-    getAllSuppliers(): Observable<any[]> {
-        return this.http.get<any[]>(`${this.apiUrl}/suppliers`);
+    getAllSuppliers(filters: any = {}): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/suppliers`, { params: filters });
+    }
+
+    getAllPurchasePayments(filters: any = {}): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/payments`, { params: filters });
     }
 
     createSupplier(supplierData: any): Observable<any> {

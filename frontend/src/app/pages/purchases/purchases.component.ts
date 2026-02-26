@@ -13,22 +13,23 @@ import { AuthService } from '../../services/auth.service';
     imports: [CommonModule, ReactiveFormsModule, FormsModule],
     template: `
     <div class="container" style="padding-top: 2rem;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-        <h2>Purchase Management</h2>
-        <div>
-            <button class="btn btn-secondary" style="margin-right: 0.5rem;" (click)="showSupplierForm = !showSupplierForm">Add Supplier</button>
-            <button class="btn btn-primary" (click)="toggleForm()">New Purchase</button>
+      <div style="display: flex; gap: 1rem; margin-bottom: 2rem; align-items: center;">
+        <h2 style="margin: 0;">Purchases</h2>
+        <div style="margin-left: auto; display: flex; gap: 0.5rem;">
+         <button class="btn btn-secondary" style="margin-right: 0.5rem;" (click)="showSupplierForm = !showSupplierForm">Add Supplier</button>
+         <button class="btn btn-primary" (click)="toggleForm()">New Purchase</button>
         </div>
-      </div>
+        </div>
 
       <!-- Supplier Form -->
-      <div *ngIf="showSupplierForm" class="card" style="margin-bottom: 1rem;">
+      <div *ngIf="showSupplierForm" class="card">
         <h3>New Supplier</h3>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div  style="display: flex; gap: 1rem; margin-bottom: 1rem; align-items: center;">
             <input type="text" class="form-control" [(ngModel)]="newSupplier.name" placeholder="Supplier Name">
             <input type="text" class="form-control" [(ngModel)]="newSupplier.phone" placeholder="Phone">
+            <button class="btn btn-primary" (click)="addSupplier()">Save</button>
         </div>
-        <button class="btn btn-primary" style="margin-top: 0.5rem;" (click)="addSupplier()">Save Supplier</button>
+        
       </div>
 
       <!-- Add Purchase Form -->
@@ -105,11 +106,16 @@ import { AuthService } from '../../services/auth.service';
             </div>
 
             <button type="submit" class="btn btn-primary" [disabled]="purchaseForm.invalid || purchaseItems.length === 0">Create Purchase</button>
+            
         </form>
       </div>
 
       <!-- Purchase List -->
       <div class="card" style="margin-top: 1rem;">
+      <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+        <input type="text" class="form-control" [(ngModel)]="searchTerm" placeholder="Search purchases by invoice or supplier...">
+        <button class="btn btn-primary" (click)="onSearch()">Search</button>
+        </div>
         <table style="width: 100%; border-collapse: collapse;">
             <thead>
                 <tr style="text-align: left; border-bottom: 1px solid var(--border-color);">
@@ -146,7 +152,7 @@ import { AuthService } from '../../services/auth.service';
             </div>
             <div class="form-group">
                 <label class="form-label">Select Purchase</label>
-                <select class="form-control" [(ngModel)]="clearBalPurchaseId">
+                <select class="form-control" [(ngModel)]="clearBalPurchaseId" >
                     <option *ngFor="let p of filteredPurchasesForClearBal" [value]="p.id">Inv: {{ p.invoiceNo }} (Bal: Rs. {{p.balance}})</option>
                 </select>
             </div>
@@ -154,13 +160,57 @@ import { AuthService } from '../../services/auth.service';
                 <label class="form-label">Clear Amount</label>
                 <input type="number" class="form-control" [(ngModel)]="clearBalAmount">
             </div>
+            <div class="form-group">
+                <label class="form-label">Payment Type</label>
+                <select class="form-control" [(ngModel)]="method">
+                    <option value="CASH">CASH</option>
+                    <option value="ONLINE">ONLINE</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Notes</label>
+                <input type="text" class="form-control" [(ngModel)]="notes" placeholder="Payment notes...">
+            </div>
         </div>
-        <button class="btn btn-primary" style="margin-top: 1rem;" (click)="submitClearPurchaseBalance()" [disabled]="!clearBalPurchaseId || !clearBalAmount">Submit Payment</button>
+        <button class="btn btn-primary" style="margin-top: 1rem;" (click)="submitClearPurchaseBalance()">Submit Payment</button>
+        <button type="button" class="btn btn-secondary" style="margin-left: 1rem;" (click)="searchPayments()">Search Payment</button>
+        <button type="button" class="btn btn-tertiary" style="margin-left: 1rem;" (click)="loadPurchasePayments()">Clear</button>
+      </div>
+
+      <!-- Payment History Table (Phase 13) -->
+      <div class="card" style="margin-top: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3>Payment Clearing History</h3>
+            <button class="btn btn-secondary" (click)="printHistory()">Print History</button>
+        </div>
+        <table id="payment-history-table" style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="text-align: left; border-bottom: 1px solid var(--border-color);">
+                    <th style="padding: 1rem;">Supplier</th>
+                    <th style="padding: 1rem;">Invoice #</th>
+                    <th style="padding: 1rem;">Amount</th>
+                    <th style="padding: 1rem;">Method</th>
+                    <th style="padding: 1rem;">Date</th>
+                    <th style="padding: 1rem;">Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let pay of purchasePayments" style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 1rem;">{{ pay.supplier?.name }}</td>
+                    <td style="padding: 1rem;">{{ pay.purchase?.invoiceNo || '-' }}</td>
+                    <td style="padding: 1rem;">Rs. {{ pay.amount | number:'1.2-2' }}</td>
+                    <td style="padding: 1rem;">{{ pay.method }}</td>
+                    <td style="padding: 1rem;">{{ pay.paymentDate | date:'short' }}</td>
+                    <td style="padding: 1rem;">{{ pay.notes }}</td>
+                </tr>
+            </tbody>
+        </table>
       </div>
     </div>
   `,
     styles: [`
     .btn-secondary { background: var(--secondary); color: white; }
+    .btn-tertiary { background: var(--text-muted); color: white; }
   `]
 })
 export class PurchasesComponent implements OnInit {
@@ -180,7 +230,12 @@ export class PurchasesComponent implements OnInit {
     clearBalSupplierId: number | null = null;
     clearBalPurchaseId: number | null = null;
     clearBalAmount: number = 0;
+    method: string = 'CASH';
+    notes: string = '';
     filteredPurchasesForClearBal: any[] = [];
+
+    searchTerm = '';
+    purchasePayments: any[] = [];
 
     purchaseItems: any[] = [];
     currentItem = { productId: null, quantity: 1, costPrice: 0 };
@@ -192,7 +247,6 @@ export class PurchasesComponent implements OnInit {
         private authService: AuthService,
         private fb: FormBuilder
     ) {
-        console.log('Current User:', this.user);
         this.purchaseForm = this.fb.group({
             supplierId: [null, Validators.required],
             shopId: [null, Validators.required],
@@ -211,10 +265,24 @@ export class PurchasesComponent implements OnInit {
     }
 
     loadData() {
-        this.purchaseService.getAllPurchases().subscribe(data => this.purchases = data);
+        const filters = this.searchTerm ? { search: this.searchTerm } : {};
+        this.purchaseService.getAllPurchases(filters).subscribe(data => this.purchases = data);
         this.purchaseService.getAllSuppliers().subscribe(data => this.suppliers = data);
         this.productService.getAllProducts().subscribe(data => this.products = data);
         this.shopService.getAllShops().subscribe(data => this.shops = data);
+        this.loadPurchasePayments();
+    }
+
+    onSearch() {
+        this.loadData();
+    }
+
+    searchPayments(){
+        this.loadPurchasePayments({ purchaseId: this.clearBalPurchaseId });
+    }
+
+    loadPurchasePayments(filters: any = {}) {
+        this.purchaseService.getAllPurchasePayments(filters).subscribe(data => this.purchasePayments = data);
     }
 
     toggleForm() {
@@ -249,17 +317,46 @@ export class PurchasesComponent implements OnInit {
 
     onClearBalSupplierChange() {
         if (!this.clearBalSupplierId) return;
-        this.purchaseService.getAllPurchases(Number(this.clearBalSupplierId)).subscribe(data => {
+        this.purchaseService.getAllPurchases({ supplierId: Number(this.clearBalSupplierId) }).subscribe(data => {
             this.filteredPurchasesForClearBal = data.filter((p: any) => Number(p.balance) > 0);
         });
     }
 
     submitClearPurchaseBalance() {
-        if (!this.clearBalPurchaseId || !this.clearBalAmount) return;
-        this.purchaseService.clearPurchaseBalance(Number(this.clearBalPurchaseId), this.clearBalAmount).subscribe(() => {
+        if (!this.clearBalPurchaseId || !this.clearBalAmount) {
+            this.toastr.error('Please select a purchase and supplier and enter an amount to clear');
+            return;
+        }
+        const selectedPurchase = this.purchases.find(p => p.id == this.clearBalPurchaseId);
+
+        if (!selectedPurchase) {
+            this.toastr.error('Invalid purchase selected');
+            return;
+        }
+
+        //  Prevent negative or zero
+        if (this.clearBalAmount <= 0) {
+            this.toastr.error('Clear amount must be greater than 0');
+            return;
+        }
+
+        //  Prevent negative numbers explicitly
+        if (this.clearBalAmount < 0) {
+            this.toastr.error('Negative values are not allowed');
+            return;
+        }
+
+        //  Prevent more than balance
+        if (this.clearBalAmount > selectedPurchase.balance) {
+            this.toastr.error('Clear amount must be less than or equal to the purchase balance');
+            return;
+        }
+        this.purchaseService.clearPurchaseBalance(Number(this.clearBalPurchaseId), this.clearBalAmount, this.method, this.notes).subscribe(() => {
             this.toastr.success('Purchase balance updated successfully');
             this.clearBalAmount = 0;
             this.clearBalPurchaseId = null;
+            this.method = 'CASH';
+            this.notes = '';
             this.loadData();
         });
     }
@@ -307,5 +404,44 @@ export class PurchasesComponent implements OnInit {
             this.purchaseForm.reset();
             this.purchaseItems = [];
         });
+    }
+
+    printHistory() {
+        const content = document.getElementById('payment-history-table');
+        if (!content) return;
+
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>Payment History</title>
+                    <style>
+                         @page { size: 80mm auto; margin: 0; }
+                              body { font-family: Arial, sans-serif; padding: 20px; }
+                            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                            th { text-align: left; border-bottom: 2px solid #333; padding-bottom: 10px; }
+                        th, td { background-color: #f2f2f2; font-size: 14px; }
+                        h2 { text-align: center; }
+                    </style>
+                </head>
+                <body>
+                    <h2>Purchase Payment Clearance History</h2>
+                    ${content.outerHTML}
+                </body>
+            </html>
+            <script>
+                window.onload = function () {
+                    window.print();
+                };
+
+                window.onafterprint = function () {
+                    window.close();
+                };
+            <\/script>
+        `);
+        printWindow.document.close();
+    }
     }
 }

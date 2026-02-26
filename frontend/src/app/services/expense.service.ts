@@ -7,7 +7,7 @@ import { environment } from '../../environments/environment';
     providedIn: 'root'
 })
 export class ExpenseService {
-    private apiUrl = environment.apiUrl+'/expenses';
+    private apiUrl = environment.apiUrl + '/expenses';
 
     constructor(private http: HttpClient) { }
 
@@ -15,9 +15,8 @@ export class ExpenseService {
         return this.http.post(this.apiUrl, expenseData);
     }
 
-    getAllExpenses(shopId?: number): Observable<any[]> {
-        const url = shopId ? `${this.apiUrl}?shopId=${shopId}` : this.apiUrl;
-        return this.http.get<any[]>(url);
+    getAllExpenses(filters: any = {}): Observable<any[]> {
+        return this.http.get<any[]>(this.apiUrl, { params: filters });
     }
 
     deleteExpense(id: number): Observable<any> {

@@ -3,16 +3,17 @@ import { CommonModule, AsyncPipe } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
 
+import { FormsModule } from '@angular/forms';
 import { ReportService } from '../../services/report.service';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, AsyncPipe],
+  imports: [CommonModule, AsyncPipe, FormsModule],
   template: `
     <div *ngIf="user$ | async as user">
       <div class="container" style="padding-top: 2rem;">
-        <div class="card">
+        <!--<div class="card">
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <h1>Welcome, {{ user.name }}!</h1>
             <button class="btn btn-danger" (click)="logout()">Logout</button>
@@ -20,20 +21,39 @@ import { ReportService } from '../../services/report.service';
           <p style="margin-top: 1rem; color: var(--text-muted);">
             Role: <strong>{{ user.role }}</strong>
           </p>
+        </div>-->
+
+        <!-- Filters -->
+        <div class="card" style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+          
+                <input type="date" class="form-control" [(ngModel)]="startDate">
+          
+                <input type="date" class="form-control" [(ngModel)]="endDate">
+           
+            <button class="btn btn-primary" (click)="loadStats()">Search</button>
+            <button class="btn btn-secondary" (click)="resetFilters()">Reset</button>
         </div>
 
-        <div *ngIf="stats" style="margin-top: 2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
-            <div class="card">
+        <div *ngIf="stats" class="card" style="margin-top: 2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+            <div style="padding-left:10px; border-left: 5px solid var(--primary);">
                 <h3>Total Sales</h3>
-                <p style="font-size: 2rem; font-weight: bold; color: var(--primary);">Rs. {{ stats.totalSales | number:'1.2-2' }}</p>
+                <p style="font-size: 1rem; font-weight: bold; color: var(--primary);">Rs. {{ stats.totalSales | number:'1.2-2' }}</p>
             </div>
-            <div class="card">
+            <div style="padding-left:10px; border-left: 5px solid var(--danger);">
+                <h3>Total Expenses</h3>
+                <p style="font-size: 1rem; font-weight: bold; color: var(--danger);">Rs. {{ stats.totalExpenses | number:'1.2-2' }}</p>
+            </div>
+            <div style="padding-left:10px; border-left: 5px solid var(--secondary);">
                 <h3>Total Products</h3>
-                <p style="font-size: 2rem; font-weight: bold; color: var(--secondary);">{{ stats.totalProducts }}</p>
+                <p style="font-size: 1rem; font-weight: bold; color: var(--secondary);">{{ stats.totalProducts }}</p>
             </div>
-            <div class="card">
+            <div style="padding-left:10px; border-left: 5px solid var(--accent);">
                 <h3>Active Installments</h3>
-                <p style="font-size: 2rem; font-weight: bold; color: var(--accent);">{{ stats.activeInstallmentsCount }}</p>
+                <p style="font-size: 1rem; font-weight: bold; color: var(--accent);">{{ stats.activeInstallmentsCount }}</p>
+            </div>
+            <div style="padding-left:10px; border-left: 5px solid #6f42c1;">
+                <h3>Total Customers</h3>
+                <p style="font-size: 1rem; font-weight: bold; color: #6f42c1;">{{ stats.totalCustomers }}</p>
             </div>
         </div>
 
@@ -63,6 +83,8 @@ import { ReportService } from '../../services/report.service';
 export class DashboardComponent implements OnInit {
   user$ = this.authService.currentUser$;
   stats: any = null;
+  startDate: string = '';
+  endDate: string = '';
 
   constructor(
     private authService: AuthService,
@@ -75,7 +97,16 @@ export class DashboardComponent implements OnInit {
   }
 
   loadStats() {
-    this.reportService.getDashboardStats().subscribe(data => this.stats = data);
+    const filters: any = {};
+    if (this.startDate) filters.startDate = this.startDate;
+    if (this.endDate) filters.endDate = this.endDate;
+    this.reportService.getDashboardStats(filters).subscribe(data => this.stats = data);
+  }
+
+  resetFilters() {
+    this.startDate = '';
+    this.endDate = '';
+    this.loadStats();
   }
 
   logout() {

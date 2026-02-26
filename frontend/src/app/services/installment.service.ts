@@ -16,12 +16,7 @@ export class InstallmentService {
     }
 
     getInstallmentPlans(filters: any = {}): Observable<any[]> {
-        let queryParams = '';
-        if (filters.phone) queryParams += `phone=${filters.phone}&`;
-        if (filters.cnic) queryParams += `cnic=${filters.cnic}&`;
-
-        const url = queryParams ? `${this.apiUrl}?${queryParams}` : this.apiUrl;
-        return this.http.get<any[]>(url);
+        return this.http.get<any[]>(this.apiUrl, { params: filters });
     }
 
     payInstallment(id: number, amount: number, paymentMethod: string = 'CASH', referenceId?: string): Observable<any> {

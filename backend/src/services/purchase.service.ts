@@ -53,15 +53,25 @@ export const createPurchase = async (data: any) => {
     return purchase;
 };
 
-export const getAllPurchases = async (filters: any) => {
+export const getAllPurchases = async (filters: any = {}) => {
+    const { search, shopId, supplierId } = filters;
+    const where: any = {};
+    if (shopId) where.shopId = shopId;
+    if (supplierId) where.supplierId = Number(supplierId);
+    if (search) {
+        where.OR = [
+            { invoiceNo: { contains: search } },
+            { supplier: { name: { contains: search } } }
+        ];
+    }
     return await prisma.purchase.findMany({
-        where: filters,
+        where,
         include: {
-            items: { include: { product: true } },
-            user: { select: { name: true } },
-            supplier: { select: { name: true } }
+            supplier: { select: { name: true } },
+            shop: { select: { name: true } }
         },
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
+        take: 200
     });
 };
 
@@ -83,10 +93,19 @@ export const createSupplier = async (data: any) => {
     return await prisma.supplier.create({ data });
 };
 
-export const getAllSuppliers = async () => {
+export const getAllSuppliers = async (filters: any = {}) => {
+    const { search } = filters;
+    const where: any = { isActive: true };
+    if (search) {
+        where.OR = [
+            { name: { contains: search } },
+            { company: { contains: search } }
+        ];
+    }
     return await prisma.supplier.findMany({
-        where: { isActive: true },
-        orderBy: { name: 'asc' }
+        where,
+        orderBy: { name: 'asc' },
+        take: 200
     });
 };
 
@@ -111,16 +130,28 @@ export const clearSupplierBalance = async (id: number) => {
     });
 };
 
-export const clearPurchaseBalance = async (purchaseId: number, amount: number) => {
-    return await prisma.$transaction(async (prisma: any) => {
-        const purchase = await prisma.purchase.findUnique({ where: { id: purchaseId } });
+export const clearPurchaseBalance = async (purchaseId: number, amount: number, method: string, notes: string) => {
+    return await prisma.$transaction(async (tx: any) => {
+        const purchase = await tx.purchase.findUnique({ where: { id: purchaseId } });
         if (!purchase) throw new Error('Purchase not found');
+
+        if (amount > purchase.balance) {
+            throw new Error('Amount exceeds purchase balance');
+        }
+
+        if (amount <= 0) {
+            throw new Error('Amount must be greater than zero');
+        }
+
+        if(amount < 0) {
+            throw new Error('Negative values are not allowed');
+        }
 
         const newPaidAmount = Number(purchase.paidAmount) + amount;
         const newBalance = Number(purchase.totalAmount) - newPaidAmount;
 
         // 1. Update Purchase
-        await prisma.purchase.update({
+        await tx.purchase.update({
             where: { id: purchaseId },
             data: {
                 paidAmount: newPaidAmount,
@@ -129,13 +160,43 @@ export const clearPurchaseBalance = async (purchaseId: number, amount: number) =
         });
 
         // 2. Update Supplier Balance
-        await prisma.supplier.update({
+        await tx.supplier.update({
             where: { id: purchase.supplierId },
             data: {
                 balance: { decrement: amount }
             }
         });
 
+        // 3. Log Payment entry
+        await (tx as any).purchasePayment.create({
+            data: {
+                purchaseId,
+                supplierId: purchase.supplierId,
+                shopId: purchase.shopId,
+                amount,
+                method: method, // Defaulting for simple clear
+                notes: notes
+            }
+        });
+
         return { success: true };
+    });
+};
+
+export const getAllPurchasePayments = async (filters: any = {}) => {
+    const { supplierId, purchaseId, shopId } = filters;
+    const where: any = {};
+    if (supplierId) where.supplierId = Number(supplierId);
+    if (purchaseId) where.purchaseId = Number(purchaseId);
+    if (shopId) where.shopId = shopId;
+
+    return await prisma.purchasePayment.findMany({
+        where,
+        include: {
+            supplier: { select: { name: true } },
+            purchase: { select: { invoiceNo: true } }
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 200
     });
 };

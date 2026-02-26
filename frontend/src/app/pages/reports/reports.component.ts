@@ -9,7 +9,7 @@ import { ReportService } from '../../services/report.service';
     imports: [CommonModule, FormsModule],
     template: `
     <div class="container" style="padding-top: 2rem;">
-      <h2 style="margin-bottom: 2rem;">Reports</h2>
+      <h2 style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">Reports <button class="btn btn-primary" (click)="downloadPDF()">Download PDF</button></h2>
 
       <div class="tabs" style="display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; align-items: center;">
           <button class="btn" [class.btn-primary]="activeTab === 'sales'" (click)="setTab('sales')">Sales</button>
@@ -17,10 +17,10 @@ import { ReportService } from '../../services/report.service';
           <button class="btn" [class.btn-primary]="activeTab === 'due'" (click)="setTab('due')">Installments Due</button>
           <button class="btn" [class.btn-primary]="activeTab === 'summary'" (click)="setTab('summary')">Customer Summary</button>
           
-          <div style="margin-left: auto; display: flex; gap: 1rem;">
-             <input *ngIf="['due', 'summary'].includes(activeTab)" type="text" class="form-control" placeholder="Phone..." [(ngModel)]="searchPhone" (input)="loadCurrentTab()">
-             <input *ngIf="['due', 'summary'].includes(activeTab)" type="text" class="form-control" placeholder="CNIC..." [(ngModel)]="searchCNIC" (input)="loadCurrentTab()">
-             <button class="btn btn-secondary" (click)="downloadPDF()">Download PDF</button>
+          <div class="form-group" style="margin-left: auto; display: flex; gap: 1rem;">
+             <input *ngIf="['due', 'summary'].includes(activeTab)" type="text" class="form-control" placeholder="Phone..." [(ngModel)]="searchPhone" >
+             <input *ngIf="['due', 'summary'].includes(activeTab)" type="text" class="form-control" placeholder="CNIC..." [(ngModel)]="searchCNIC" >
+             <button *ngIf="['due', 'summary'].includes(activeTab)" class="btn btn-secondary" (click)="loadCurrentTab()">Search</button>
           </div>
       </div>
 
@@ -143,6 +143,8 @@ import { ReportService } from '../../services/report.service';
       h3 { display: block !important; text-align: center; margin-bottom: 5px !important; }
       ::ng-deep .sidebar { display: none !important; }
     }
+    .btn-secondary { background: var(--secondary); color: white; }
+    .btn-tertiary { background: var(--text-muted); color: white; }
   `]
 })
 export class ReportsComponent implements OnInit {

@@ -19,9 +19,9 @@ export const getAllPurchases = async (req: AuthRequest, res: Response) => {
         } else if (req.shopId) {
             filters.shopId = req.shopId;
         }
-
+        if (req.query.search) filters.search = String(req.query.search);
         if (req.query.supplierId) filters.supplierId = Number(req.query.supplierId);
-
+        console.log('Filters:', filters);
         const purchases = await purchaseService.getAllPurchases(filters);
         res.json(purchases);
     } catch (error: any) {
@@ -51,12 +51,30 @@ export const createSupplier = async (req: Request, res: Response) => {
     }
 };
 
-export const getAllSuppliers = async (req: Request, res: Response) => {
+export const getAllSuppliers = async (req: AuthRequest, res: Response) => {
     try {
-
-        const suppliers = await purchaseService.getAllSuppliers();
-        console.log(suppliers);
+        const filters: any = {};
+        if (req.query.search) filters.search = String(req.query.search);
+        const suppliers = await purchaseService.getAllSuppliers(filters);
         res.json(suppliers);
+    } catch (error: any) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const getAllPurchasePayments = async (req: AuthRequest, res: Response) => {
+    try {
+        const filters: any = {};
+        if (req.user.role !== 'SUPER_ADMIN') {
+            filters.shopId = req.user.shopId;
+        } else if (req.shopId) {
+            filters.shopId = req.shopId;
+        }
+        if (req.query.supplierId) filters.supplierId = Number(req.query.supplierId);
+        if (req.query.purchaseId) filters.purchaseId = Number(req.query.purchaseId);
+
+        const payments = await purchaseService.getAllPurchasePayments(filters);
+        res.json(payments);
     } catch (error: any) {
         res.status(500).json({ message: error.message });
     }
@@ -73,8 +91,8 @@ export const clearSupplierBalance = async (req: Request, res: Response) => {
 
 export const clearPurchaseBalance = async (req: Request, res: Response) => {
     try {
-        const { amount } = req.body;
-        await purchaseService.clearPurchaseBalance(Number(req.params.id), Number(amount));
+        const { amount, method = 'CASH', notes = 'Balance Clearance' } = req.body;
+        await purchaseService.clearPurchaseBalance(Number(req.params.id), Number(amount), method, notes);
         res.json({ message: 'Purchase balance cleared successfully' });
     } catch (error: any) {
         res.status(500).json({ message: error.message });

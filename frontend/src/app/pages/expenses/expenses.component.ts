@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
 import { ExpenseService } from '../../services/expense.service';
 import { ShopService } from '../../services/shop.service';
 import { AuthService } from '../../services/auth.service';
@@ -8,7 +8,7 @@ import { AuthService } from '../../services/auth.service';
 @Component({
     selector: 'app-expenses',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule],
+    imports: [CommonModule, ReactiveFormsModule, FormsModule],
     template: `
     <div class="container" style="padding-top: 2rem;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
@@ -49,6 +49,15 @@ import { AuthService } from '../../services/auth.service';
 
       <!-- Expense List -->
       <div class="card">
+       <div style="margin-bottom: 2rem; display: flex; gap: 1rem;">
+        <input type="text" class="form-control" [(ngModel)]="searchTerm" placeholder="Search expenses by description or category...">
+        <input type="date" class="form-control" [(ngModel)]="startDate">
+        <input type="date" class="form-control" [(ngModel)]="endDate"> 
+        <button class="btn btn-primary" (click)="onSearch()">Search</button>
+        <button class="btn btn-secondary" (click)="clearForm()">Clear</button>
+      </div>
+
+      
         <table style="width: 100%; border-collapse: collapse;">
             <thead>
                 <tr style="text-align: left; border-bottom: 1px solid var(--border-color);">
@@ -86,6 +95,10 @@ export class ExpensesComponent implements OnInit {
     showForm = false;
     user: any = this.authService.getCurrentUser();
 
+    searchTerm = '';
+    startDate = new Date().toISOString().split('T')[0];
+    endDate = new Date().toISOString().split('T')[0];
+
     constructor(
         private expenseService: ExpenseService,
         private shopService: ShopService,
@@ -111,8 +124,26 @@ export class ExpensesComponent implements OnInit {
     }
 
     loadData() {
-        this.expenseService.getAllExpenses(this.user.shopId).subscribe(data => this.expenses = data);
+        const filters: any = {};
+        if (this.user.role !== 'SUPER_ADMIN') {
+            filters.shopId = this.user.shopId;
+        }
+        if (this.searchTerm) filters.search = this.searchTerm;
+        if (this.startDate) filters.startDate = this.startDate;
+        if (this.endDate) filters.endDate = this.endDate;
+        this.expenseService.getAllExpenses(filters).subscribe(data => this.expenses = data);
         this.shopService.getAllShops().subscribe(data => this.shops = data);
+    }
+
+    onSearch() {
+        this.loadData();
+    } 
+
+    clearForm() {
+        this.searchTerm = '';
+        this.startDate = new Date().toISOString().split('T')[0];
+        this.endDate = new Date().toISOString().split('T')[0];
+        this.loadData();
     }
 
     toggleForm() {

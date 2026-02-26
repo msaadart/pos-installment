@@ -19,7 +19,7 @@ export const createSale = async (data: any) => {
         if (!product) throw new Error(`Product ${item.productId} not found`);
         if (product.stock < item.quantity) throw new Error(`Insufficient stock for ${product.name}`);
 
-        totalAmount += Number(product.price) * item.quantity;
+        totalAmount += Number(item.price) * item.quantity;
     }
 
     const netAmount = totalAmount - (discount || 0);

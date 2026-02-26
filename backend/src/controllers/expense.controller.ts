@@ -11,17 +11,18 @@ export const createExpense = async (req: Request, res: Response) => {
     }
 };
 
-export const getAllExpenses = async (req: Request, res: Response) => {
+export const getAllExpenses = async (req: AuthRequest, res: Response) => {
     try {
         const filters: any = {};
-        if (req.query.shopId) filters.shopId = Number(req.query.shopId);
-        if (req.query.startDate && req.query.endDate) {
-            filters.date = {
-                gte: new Date(String(req.query.startDate)),
-                lte: new Date(String(req.query.endDate))
-            };
+        if (req.user.role !== 'SUPER_ADMIN') {
+            filters.shopId = req.user.shopId;
+        } else if (req.shopId) {
+            filters.shopId = req.shopId;
         }
-
+        if (req.query.search) filters.search = String(req.query.search);
+        if (req.query.startDate) filters.startDate = String(req.query.startDate);
+        if (req.query.endDate) filters.endDate = String(req.query.endDate);
+        console.log('Filters:', filters);
         const expenses = await expenseService.getAllExpenses(filters);
         res.json(expenses);
     } catch (error: any) {

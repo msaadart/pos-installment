@@ -24,6 +24,9 @@ model User {
   updatedAt DateTime @updatedAt
   sales     Sale[]
   purchases Purchase[] // User who created purchase
+
+  @@index([shopId])
+  @@index([email])
 }
 
 enum Role {
@@ -47,6 +50,7 @@ model Shop {
   customers Customer[] // Customers might be shop-specific or global
   expenses  Expense[]
   installmentPlans InstallmentPlan[]
+  purchasePayments PurchasePayment[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -77,6 +81,9 @@ model Product {
   purchaseItems PurchaseItem[]
   
   @@unique([sku, shopId]) // SKU unique per shop? Or global? Ideally unique per shop but simplifying to global SKU for now if constraint allows, or composite
+  @@index([shopId])
+  @@index([categoryId])
+  @@index([brandId])
 }
 
 model Category {
@@ -85,6 +92,8 @@ model Category {
   shopId    Int?      // Null for global categories
   isActive  Boolean   @default(true)
   products  Product[]
+
+  @@index([shopId])
 }
 
 model Brand {
@@ -109,17 +118,23 @@ model Customer {
   sales     Sale[]
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
+
+  @@index([shopId])
+  @@index([phone])
 }
 
 model Supplier {
-  id        Int      @id @default(autoincrement())
-  name      String
-  phone     String?
-  company   String?
-  balance   Decimal  @default(0) @db.Decimal(10, 2)
-  purchases Purchase[]
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
+  id           Int      @id @default(autoincrement())
+  name         String
+  phone        String?
+  company      String?
+  balance      Float    @default(0)
+  purchases    Purchase[]
+  purchasePayments PurchasePayment[]
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  @@index([name])
 }
 
 // --- Sales & POS ---
@@ -148,6 +163,11 @@ model Sale {
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([shopId])
+  @@index([customerId])
+  @@index([createdAt])
+  @@index([saleType])
 }
 
 enum SaleStatus {
@@ -181,6 +201,9 @@ model SaleItem {
   price     Decimal @db.Decimal(10, 2)
   discount  Decimal @default(0) @db.Decimal(10, 2)
   subtotal  Decimal @db.Decimal(10, 2)
+
+  @@index([saleId])
+  @@index([productId])
 }
 
 // --- Installments ---
@@ -202,6 +225,10 @@ model InstallmentPlan {
   
   installments    Installment[]
   createdAt       DateTime @default(now())
+
+  @@index([shopId])
+  @@index([startDate])
+  @@index([status])
 }
 
 enum PlanStatus {
@@ -225,6 +252,10 @@ model Installment {
   referenceId     String?
   
   createdAt       DateTime @default(now())
+
+  @@index([planId])
+  @@index([dueDate])
+  @@index([status])
 }
 
 enum InstallmentStatus {
@@ -252,7 +283,13 @@ model Purchase {
   status      PurchaseStatus @default(COMPLETED)
   
   items       PurchaseItem[]
+  purchasePayments PurchasePayment[]
   createdAt   DateTime @default(now())
+
+  @@index([shopId])
+  @@index([supplierId])
+  @@index([invoiceNo])
+  @@index([createdAt])
 }
 
 enum PurchaseStatus {
@@ -270,6 +307,29 @@ model PurchaseItem {
   quantity    Int
   costPrice   Decimal  @db.Decimal(10, 2)
   subtotal    Decimal  @db.Decimal(10, 2)
+
+  @@index([purchaseId])
+  @@index([productId])
+}
+
+model PurchasePayment {
+  id          Int      @id @default(autoincrement())
+  purchaseId  Int?     // Can be null if it's a general payment to supplier not tied to a specific purchase
+  purchase    Purchase? @relation(fields: [purchaseId], references: [id])
+  supplierId  Int
+  supplier    Supplier @relation(fields: [supplierId], references: [id])
+  shopId      Int
+  shop        Shop     @relation(fields: [shopId], references: [id])
+  amount      Decimal  @db.Decimal(10, 2)
+  paymentDate DateTime @default(now())
+  method      PaymentMethod @default(CASH) // Reusing existing enum
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  @@index([purchaseId])
+  @@index([supplierId])
+  @@index([shopId])
+  @@index([paymentDate])
 }
 
 // --- Accounting ---
@@ -284,4 +344,7 @@ model Expense {
   date        DateTime @default(now())
   userId      Int?
   isActive    Boolean  @default(true)
+
+  @@index([shopId])
+  @@index([date])
 }

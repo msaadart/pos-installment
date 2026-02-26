@@ -13,15 +13,13 @@ import { AuthService } from '../../services/auth.service';
     imports: [CommonModule, ReactiveFormsModule, FormsModule, NgOptimizedImage],
     template: `
     <div class="container" style="padding-top: 2rem;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-        <h2>Product Management</h2>
+      <div style="display: flex; gap: 1rem; margin-bottom: 2rem; align-items: center;">
+        
         @if(user?.role === 'SUPER_ADMIN' || user?.role === 'SHOP_ADMIN'){
-        <div>
-            <button class="btn btn-secondary" style="margin-right: 0.5rem;" (click)="showCategoryForm = !showCategoryForm">Add Category</button>
-            <button class="btn btn-secondary" style="margin-right: 0.5rem;" (click)="showBrandForm = !showBrandForm">Add Brand</button>
+            <button class="btn btn-secondary" (click)="showCategoryForm = !showCategoryForm">Add Category</button>
+            <button class="btn btn-secondary" (click)="showBrandForm = !showBrandForm">Add Brand</button>
             <button class="btn btn-primary" (click)="toggleForm()">New Product</button>
-        </div>
-    }
+        }
       </div>
 
       <!-- Category Form -->
@@ -40,7 +38,7 @@ import { AuthService } from '../../services/auth.service';
 
       <!-- Add Product Form -->
       <div *ngIf="showForm" class="card" style="margin-bottom: 2rem;">
-        <h3>New Product</h3>
+        <h3>{{ isEditing ? 'Edit Product' : 'New Product' }}</h3>
         <form [formGroup]="productForm" (ngSubmit)="onSubmit()">
             <div class="form-group">
                 <label class="form-label">Name</label>
@@ -104,12 +102,19 @@ import { AuthService } from '../../services/auth.service';
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-primary" [disabled]="productForm.invalid">Create Product</button>
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit" class="btn btn-primary" [disabled]="productForm.invalid">{{ isEditing ? 'Update' : 'Create' }} Product</button>
+                <button type="button" class="btn btn-secondary" (click)="cancelEdit()">Cancel</button>
+            </div>
         </form>
       </div>
 
       <!-- Product List -->
       <div class="card">
+      <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+        <input type="text" class="form-control" [(ngModel)]="searchTerm"  placeholder="Search products by name or SKU..." >
+        <button class="btn btn-primary" (click)="onSearch()">Search</button>
+      </div>
         <table style="width: 100%; border-collapse: collapse;">
             <thead>
                 <tr style="text-align: left; border-bottom: 1px solid var(--border-color);">
@@ -120,6 +125,7 @@ import { AuthService } from '../../services/auth.service';
                     <th style="padding: 1rem;">Stock</th>
                     <th style="padding: 1rem;">Category</th>
                     <th style="padding: 1rem;">Brand</th>
+                    <th style="padding: 1rem;">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -134,6 +140,9 @@ import { AuthService } from '../../services/auth.service';
                     <td style="padding: 1rem;">{{ product.stock }}</td>
                     <td style="padding: 1rem;">{{ product.category?.name || '-' }}</td>
                     <td style="padding: 1rem;">{{ product.brand?.name || '-' }}</td>
+                    <td style="padding: 1rem;">
+                        <button class="btn btn-secondary" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;" (click)="editProduct(product)">Edit</button>
+                    </td>
                 </tr>
             </tbody>
         </table>
@@ -163,6 +172,10 @@ export class ProductsComponent implements OnInit {
     newCategoryName = '';
     newBrandName = '';
 
+    isEditing = false;
+    editingProductId: number | null = null;
+    searchTerm = '';
+
     constructor(
         private productService: ProductService,
         private shopService: ShopService,
@@ -185,7 +198,7 @@ export class ProductsComponent implements OnInit {
 
     ngOnInit() {
         this.loadData();
-         if (this.user?.role !== 'SUPER_ADMIN') {
+        if (this.user?.role !== 'SUPER_ADMIN') {
             this.productForm.patchValue({ shopId: this.user.shopId });
             this.productForm.get('shopId')?.disable();
         } else {
@@ -194,10 +207,15 @@ export class ProductsComponent implements OnInit {
     }
 
     loadData() {
-        this.productService.getAllProducts().subscribe(data => this.products = data);
+        const filters = this.searchTerm ? { search: this.searchTerm } : {};
+        this.productService.getAllProducts(filters).subscribe(data => this.products = data);
         this.shopService.getAllShops().subscribe(data => this.shops = data);
         this.productService.getAllCategories().subscribe(data => this.categories = data);
         this.productService.getAllBrands().subscribe(data => this.brands = data);
+    }
+
+    onSearch() {
+        this.loadData();
     }
 
     toggleForm() {
@@ -240,19 +258,53 @@ export class ProductsComponent implements OnInit {
         const productData = {
             ...this.productForm.value,
             shopId: this.user?.role !== 'SUPER_ADMIN' ? this.user.shopId : Number(this.productForm.value.shopId),
-            categoryId: Number(this.productForm.value.categoryId),
-            brandId:    Number(this.productForm.value.brandId),
+            categoryId: this.productForm.value.categoryId ? Number(this.productForm.value.categoryId) : null,
+            brandId: this.productForm.value.brandId ? Number(this.productForm.value.brandId) : null,
             image: this.selectedFileBase64
         };
 
-        console.log(productData);
+        if (this.isEditing && this.editingProductId) {
+            this.productService.updateProduct(this.editingProductId, productData).subscribe(() => {
+                this.loadData();
+                this.resetForm();
+            });
+        } else {
+            this.productService.createProduct(productData).subscribe(() => {
+                this.loadData();
+                this.resetForm();
+            });
+        }
+    }
 
-        this.productService.createProduct(productData).subscribe(() => {
-            this.loadData();
-            this.toggleForm();
-            this.productForm.reset();
-            this.imagePreview = null;
-            this.selectedFileBase64 = null;
+    editProduct(product: any) {
+        this.isEditing = true;
+        this.editingProductId = product.id;
+        this.showForm = true;
+        this.productForm.patchValue({
+            name: product.name,
+            sku: product.sku,
+            price: product.price,
+            costPrice: product.costPrice,
+            stock: product.stock,
+            shopId: product.shopId,
+            categoryId: product.categoryId,
+            brandId: product.brandId,
+            barcode: product.barcode,
+            description: product.description
         });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    cancelEdit() {
+        this.resetForm();
+    }
+
+    resetForm() {
+        this.showForm = false;
+        this.isEditing = false;
+        this.editingProductId = null;
+        this.productForm.reset();
+        this.imagePreview = null;
+        this.selectedFileBase64 = null;
     }
 }

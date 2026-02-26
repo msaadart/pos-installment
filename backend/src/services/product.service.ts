@@ -41,14 +41,25 @@ export const createProduct = async (data: any) => {
     return await (prisma.product as any).create({ data: productData });
 };
 
-export const getAllProducts = async (filters: any) => {
+export const getAllProducts = async (filters: any = {}) => {
+    const { search, shopId } = filters;
+    const where: any = { isActive: true };
+    if (shopId) where.shopId = shopId;
+    if (search) {
+        where.OR = [
+            { name: { contains: search } },
+            { sku: { contains: search } }
+        ];
+    }
     return await prisma.product.findMany({
-        where: { ...filters, isActive: true },
+        where,
         include: {
             category: true,
             brand: true,
             shop: { select: { name: true } }
-        }
+        },
+        orderBy: { name: 'asc' },
+        take: 200
     });
 };
 

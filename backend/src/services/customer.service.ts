@@ -5,9 +5,20 @@ export const createCustomer = async (data: any) => {
 };
 
 export const getAllCustomers = async (filters: any = {}) => {
+    const { search, shopId, limit } = filters;
+    const where: any = { isActive: true };
+    if (shopId) where.shopId = shopId;
+    if (search) {
+        where.OR = [
+            { name: { contains: search } },
+            { phone: { contains: search } },
+            { cnic: { contains: search } }
+        ];
+    }
     return await prisma.customer.findMany({
-        where: { ...filters, isActive: true },
-        orderBy: { name: 'asc' }
+        where,
+        orderBy: { name: 'asc' },
+        take: 200
     });
 };
 

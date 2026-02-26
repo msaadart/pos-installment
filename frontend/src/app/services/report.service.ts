@@ -11,8 +11,12 @@ export class ReportService {
 
     constructor(private http: HttpClient) { }
 
-    getDashboardStats(): Observable<any> {
-        return this.http.get(`${this.apiUrl}/dashboard`);
+    getDashboardStats(filters: any = {}): Observable<any> {
+        let params = new URLSearchParams();
+        if (filters.startDate) params.append('startDate', filters.startDate);
+        if (filters.endDate) params.append('endDate', filters.endDate);
+        const url = params.toString() ? `${this.apiUrl}/dashboard?${params.toString()}` : `${this.apiUrl}/dashboard`;
+        return this.http.get<any>(url);
     }
 
     getSalesReport(startDate: string, endDate: string): Observable<any[]> {
