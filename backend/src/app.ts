@@ -21,7 +21,7 @@ import expenseRoutes from './routes/expense.routes';
 import customerRoutes from './routes/customer.routes';
 
 app.use(cors({
-    origin: 'http://localhost:4200',
+    // origin: 'http://localhost:4200',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     credentials: true,
 }
@@ -48,6 +48,14 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/purchases', purchaseRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/customers', customerRoutes);
+
+const angularPath = path.join(__dirname, '../../frontend/dist/installment-frontend/browser');
+
+app.use(express.static(angularPath));
+
+app.use((req, res) => {
+  res.sendFile(path.join(angularPath, 'index.html'));
+});
 
 app.get('/', (req, res) => {
     res.send('API is running...');

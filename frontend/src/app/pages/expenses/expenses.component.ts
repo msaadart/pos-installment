@@ -14,7 +14,15 @@ import { AuthService } from '../../services/auth.service';
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
         <h2>Expense Management</h2>
         <div *ngIf="user?.role === 'SUPER_ADMIN'" style="color: var(--text-muted); font-size: 0.9rem;">
-            Viewing expenses for: {{ authService.getSelectedShopId() || 'All Shops' }}
+            Viewing expenses for: 
+        
+            <p *ngFor="let shop of shops" style="display: inline; font-weight: bold; color: var(--primary);">
+                @if(shop.id === authService.getSelectedShopId()) {
+                    {{ shop.name }}
+                }
+            </p>
+            
+
         </div>
         <button class="btn btn-primary" (click)="toggleForm()">New Expense</button>
       </div>
@@ -96,8 +104,8 @@ export class ExpensesComponent implements OnInit {
     user: any = this.authService.getCurrentUser();
 
     searchTerm = '';
-    startDate = new Date().toISOString().split('T')[0];
-    endDate = new Date().toISOString().split('T')[0];
+    startDate = '';
+    endDate = '';
 
     constructor(
         private expenseService: ExpenseService,
@@ -137,12 +145,12 @@ export class ExpensesComponent implements OnInit {
 
     onSearch() {
         this.loadData();
-    } 
+    }
 
     clearForm() {
         this.searchTerm = '';
-        this.startDate = new Date().toISOString().split('T')[0];
-        this.endDate = new Date().toISOString().split('T')[0];
+        this.startDate = '';
+        this.endDate = '';
         this.loadData();
     }
 

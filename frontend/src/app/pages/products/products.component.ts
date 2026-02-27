@@ -12,14 +12,17 @@ import { AuthService } from '../../services/auth.service';
     standalone: true,
     imports: [CommonModule, ReactiveFormsModule, FormsModule, NgOptimizedImage],
     template: `
-    <div class="container" style="padding-top: 2rem;">
-      <div style="display: flex; gap: 1rem; margin-bottom: 2rem; align-items: center;">
-        
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;"></div>
+    <div class="container">
+      <div style="display: flex; gap: 1rem;  justify-content: space-between; margin-bottom: 2rem; align-items: center;">
+        <h2>Product Management</h2>
         @if(user?.role === 'SUPER_ADMIN' || user?.role === 'SHOP_ADMIN'){
+        <div style="display: flex; gap: 0.5rem;">
             <button class="btn btn-secondary" (click)="showCategoryForm = !showCategoryForm">Add Category</button>
             <button class="btn btn-secondary" (click)="showBrandForm = !showBrandForm">Add Brand</button>
             <button class="btn btn-primary" (click)="toggleForm()">New Product</button>
-        }
+        </div>
+    }
       </div>
 
       <!-- Category Form -->
@@ -125,7 +128,7 @@ import { AuthService } from '../../services/auth.service';
                     <th style="padding: 1rem;">Stock</th>
                     <th style="padding: 1rem;">Category</th>
                     <th style="padding: 1rem;">Brand</th>
-                    <th style="padding: 1rem;">Actions</th>
+                    <th style="padding: 1rem;" *ngIf="['SUPER_ADMIN', 'SHOP_ADMIN'].includes(user?.role)">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -140,7 +143,7 @@ import { AuthService } from '../../services/auth.service';
                     <td style="padding: 1rem;">{{ product.stock }}</td>
                     <td style="padding: 1rem;">{{ product.category?.name || '-' }}</td>
                     <td style="padding: 1rem;">{{ product.brand?.name || '-' }}</td>
-                    <td style="padding: 1rem;">
+                    <td style="padding: 1rem;" *ngIf="['SUPER_ADMIN', 'SHOP_ADMIN'].includes(user?.role)">
                         <button class="btn btn-secondary" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;" (click)="editProduct(product)">Edit</button>
                     </td>
                 </tr>

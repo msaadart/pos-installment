@@ -25,7 +25,7 @@ import { ShopService } from '../../services/shop.service';
             </div>
             <div class="form-group">
                 <label class="form-label">Email</label>
-                <input type="email" class="form-control" formControlName="email">
+                <input type="text" class="form-control" formControlName="email">
             </div>
             <div class="form-group">
                 <label class="form-label">Password</label>
@@ -85,7 +85,7 @@ export class UsersComponent implements OnInit {
     ) {
         this.userForm = this.fb.group({
             name: ['', Validators.required],
-            email: ['', [Validators.required, Validators.email]],
+            email: ['', [Validators.required]],
             password: ['', Validators.required],
             role: ['SHOP_ADMIN', Validators.required],
             shopId: [null, Validators.required]

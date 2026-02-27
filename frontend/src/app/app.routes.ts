@@ -37,9 +37,7 @@ export const routes: Routes = [
             {
                 path: 'reports',
                 loadComponent: () => import('./pages/reports/reports.component')
-                    .then(m => m.ReportsComponent),
-                canActivate: [roleGuard],
-                data: { roles: ['SUPER_ADMIN', 'SHOP_ADMIN'] }
+                    .then(m => m.ReportsComponent)
             },
             {
                 path: 'purchases',

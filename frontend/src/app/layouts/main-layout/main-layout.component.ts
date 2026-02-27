@@ -38,7 +38,7 @@ import { Subscription } from 'rxjs';
           <a routerLink="/expenses" routerLinkActive="active" class="nav-item">Expenses</a>
           <a *ngIf="user?.role === 'SUPER_ADMIN'" routerLink="/shops" routerLinkActive="active" class="nav-item">Shops</a>
           <a *ngIf="['SUPER_ADMIN'].includes(user?.role)" routerLink="/users" routerLinkActive="active" class="nav-item">Users</a>
-          <a *ngIf="['SUPER_ADMIN', 'SHOP_ADMIN'].includes(user?.role)" routerLink="/reports" routerLinkActive="active" class="nav-item">Reports</a>
+          <a routerLink="/reports" routerLinkActive="active" class="nav-item">Reports</a>
         </nav>
         <div class="sidebar-footer" style="margin-top: auto; padding: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
           <button class="btn btn-danger" style="width: 100%;" (click)="logout()">Logout</button>

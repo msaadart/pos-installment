@@ -64,8 +64,10 @@ import { AuthService } from '../../services/auth.service';
               <th style="padding: 1rem;">Name</th>
               <th style="padding: 1rem;">Phone</th>
               <th style="padding: 1rem;">CNIC</th>
-              <th style="padding: 1rem;">Balance</th>
-              <th style="padding: 1rem;">Actions</th>
+              <th style="padding: 1rem;">Address</th>
+              <th style="padding: 1rem;">Is Active</th>
+              <th style="padding: 1rem;">Credit Limit</th>
+              <th style="padding: 1rem;" *ngIf="['SUPER_ADMIN', 'SHOP_ADMIN'].includes(user?.role)">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -73,12 +75,14 @@ import { AuthService } from '../../services/auth.service';
               <td style="padding: 1rem;">{{ c.name }}</td>
               <td style="padding: 1rem;">{{ c.phone }}</td>
               <td style="padding: 1rem;">{{ c.cnic || '-' }}</td>
-              <td style="padding: 1rem;">Rs. {{ c.balance | number:'1.2-2' }}</td>
-              <td style="padding: 1rem;">
-              @if(user?.role === 'SUPER_ADMIN' || user?.role === 'SHOP_ADMIN'){
+              <td style="padding: 1rem;">{{ c.address }}</td>
+              <td style="padding: 1rem;">{{ c.isActive ? 'Yes' : 'No' }}</td>
+              <td style="padding: 1rem;">Rs. {{ c.creditLimit | number:'1.2-2'  }}</td>
+              <td style="padding: 1rem;" *ngIf="['SUPER_ADMIN', 'SHOP_ADMIN'].includes(user?.role)">
+              
                 <button class="btn btn-secondary" style="font-size: 0.8rem; margin-right: 0.5rem;" (click)="editCustomer(c)">Edit</button>
                 <button class="btn btn-danger" style="font-size: 0.8rem;" (click)="deleteCustomer(c.id)">Inactive</button>
-              }
+              
               </td>
             </tr>
             <tr *ngIf="filteredCustomers.length === 0">

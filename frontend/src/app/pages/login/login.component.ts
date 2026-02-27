@@ -20,7 +20,7 @@ import { CommonModule } from '@angular/common';
         <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
           <div class="form-group">
             <label class="form-label">Email</label>
-            <input type="email" class="form-control" formControlName="email" placeholder="Enter your email">
+            <input type="text" class="form-control" formControlName="email" placeholder="Enter your email">
           </div>
 
           <div class="form-group">
@@ -71,7 +71,7 @@ export class LoginComponent {
     private router: Router
   ) {
     this.loginForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
+      email: ['', [Validators.required]],
       password: ['', Validators.required]
     });
   }
