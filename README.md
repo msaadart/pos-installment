@@ -44,7 +44,9 @@ npx prisma db push
    ```bash
    npx prisma db push
    ```
-5. Run the server:
+5.  npx prisma generate
+
+6. Run the server:
    ```bash
    npm start
    ```

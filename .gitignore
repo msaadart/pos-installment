@@ -3,3 +3,7 @@
 /frontend/dist/
 /frontend/.angular
 /frontend/.vscode
+/backend/.env
+/backend/.vscode
+/backend/dist
+/backend/installment-frontend

@@ -26,11 +26,33 @@ app.use(cors({
     credentials: true,
 }
 ));
+app.use(
+  helmet({
+    contentSecurityPolicy: false
+  })
+);
+// app.use(helmet({
+//     crossOriginResourcePolicy: { policy: "cross-origin" },
+//     crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+//      contentSecurityPolicy: {
+//       directives: {
+//         defaultSrc: ["'self'"],
 
-app.use(helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" }
-}));
+//         scriptSrc: [
+//           "'self'",
+//           "'unsafe-inline'"   // allow inline JS
+//         ],
+
+//         styleSrc: [
+//           "'self'",
+//           "'unsafe-inline'"   // allow inline CSS
+//         ],
+
+//         objectSrc: ["'none'"],
+//         upgradeInsecureRequests: []
+//       }
+//     }
+// }));
 app.use(morgan('dev'));
 
 app.use(express.json({ limit: '5mb' }));
@@ -49,7 +71,7 @@ app.use('/api/purchases', purchaseRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/customers', customerRoutes);
 
-const angularPath = path.join(__dirname, '../../frontend/dist/installment-frontend/browser');
+const angularPath = path.join(__dirname, '../installment-frontend/browser');
 
 app.use(express.static(angularPath));
 
