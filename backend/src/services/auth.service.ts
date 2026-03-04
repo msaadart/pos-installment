@@ -1,26 +1,24 @@
-import prisma from '../utils/prisma';
+import pool from '../utils/db';
 import bcrypt from 'bcryptjs';
 import { generateToken } from '../utils/jwt.utils';
 
 export const registerUser = async (data: any) => {
     const { email, password, name, role, shopId } = data;
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) {
-        throw new Error('User already exists');
+    const [existingUsers]: any = await pool.query('SELECT id FROM user WHERE email = ?', [email]);
+    if (existingUsers.length > 0) {
+        throw new Error('user already exists');
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = await prisma.user.create({
-        data: {
-            email,
-            password: hashedPassword,
-            name,
-            role: role || 'SALES_USER', // Default to sales user
-            shopId: shopId || null
-        },
-    });
+    const [result]: any = await pool.query(
+        'INSERT INTO user (email, password, name, role, shopId) VALUES (?, ?, ?, ?, ?)',
+        [email, hashedPassword, name, role || 'SALES_USER', shopId || null]
+    );
+
+    const [rows]: any = await pool.query('SELECT * FROM user WHERE id = ?', [result.insertId]);
+    const user = rows[0];
 
     const token = generateToken({ id: user.id, email: user.email, role: user.role });
     return { user, token };
@@ -28,11 +26,12 @@ export const registerUser = async (data: any) => {
 
 export const loginUser = async (data: any) => {
     const { email, password } = data;
-    console.log("DATABASE_URL:", process.env.DATABASE_URL);
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) {
+
+    const [rows]: any = await pool.query('SELECT * FROM user WHERE email = ?', [email]);
+    if (rows.length === 0) {
         throw new Error('Invalid email or password');
     }
+    const user = rows[0];
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {

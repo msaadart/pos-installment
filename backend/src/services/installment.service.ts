@@ -1,43 +1,44 @@
-import prisma from '../utils/prisma';
+import pool from '../utils/db';
 import { createSale } from './sale.service';
 
 export const createInstallmentPlan = async (data: any) => {
     const { saleId, totalAmount, downPayment, totalInstallments, startDate, monthlyInstallment, shopId } = data;
 
-    // 1. Create Plan
-    const plan = await prisma.installmentPlan.create({
-        data: {
-            saleId,
-            totalAmount,
-            downPayment,
-            monthlyInstallment,
-            totalInstallments,
-            startDate: new Date(startDate),
-            status: 'ACTIVE',
-            shopId: shopId || 1
-        } as any
-    });
+    const connection = await pool.getConnection();
+    try {
+        await connection.beginTransaction();
 
-    // 2. Generate Installments
-    const installments = [];
-    let currentDate = new Date(startDate);
+        // 1. Create Plan
+        const [planResult]: any = await connection.query(
+            `INSERT INTO installmentplan 
+            (saleId, totalAmount, downPayment, monthlyInstallment, totalInstallments, startDate, status, shopId) 
+            VALUES (?, ?, ?, ?, ?, ?, 'ACTIVE', ?)`,
+            [saleId, totalAmount, downPayment, monthlyInstallment, totalInstallments, new Date(startDate), shopId || 1]
+        );
+        const planId = planResult.insertId;
 
-    for (let i = 1; i <= totalInstallments; i++) {
-        currentDate.setMonth(currentDate.getMonth() + 1);
-        installments.push({
-            planId: plan.id,
-            dueDate: new Date(currentDate),
-            amount: monthlyInstallment,
-            status: 'PENDING'
-        });
+        // 2. Generate Installments
+        let currentDate = new Date(startDate);
+        for (let i = 1; i <= totalInstallments; i++) {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            await connection.query(
+                `INSERT INTO installment (planId, dueDate, amount, status) VALUES (?, ?, ?, 'PENDING')`,
+                [planId, new Date(currentDate), monthlyInstallment]
+            );
+        }
+
+        await connection.commit();
+
+        const [plans]: any = await pool.query('SELECT * FROM installmentplan WHERE id = ?', [planId]);
+        const [installments]: any = await pool.query('SELECT * FROM installment WHERE planId = ?', [planId]);
+
+        return { ...plans[0], installments };
+    } catch (error) {
+        await connection.rollback();
+        throw error;
+    } finally {
+        connection.release();
     }
-
-    await prisma.installment.createMany({ data: installments as any });
-
-    return prisma.installmentPlan.findUnique({
-        where: { id: plan.id },
-        include: { installments: true }
-    });
 };
 
 export const createInstallmentSale = async (data: any) => {
@@ -53,81 +54,116 @@ export const createInstallmentSale = async (data: any) => {
 
 export const getInstallmentPlans = async (filters: any = {}) => {
     const { shopId, status, search, phone, cnic } = filters;
-    const where: any = {};
+    let query = `
+        SELECT ip.*, 
+            s.invoiceNo as saleInvoiceNo,
+            c.name as customerName, c.phone as customerPhone, c.cnic as customerCnic
+        FROM installmentplan ip
+        LEFT JOIN sale s ON ip.saleId = s.id
+        LEFT JOIN customer c ON s.customerId = c.id
+        WHERE 1=1
+    `;
+    const params: any[] = [];
 
-    if (shopId) where.shopId = Number(shopId);
-    if (status) where.status = status;
-
+    if (shopId) {
+        query += ' AND ip.shopId = ?';
+        params.push(Number(shopId));
+    }
+    if (status) {
+        query += ' AND ip.status = ?';
+        params.push(status);
+    }
     if (search || phone || cnic) {
-        where.sale = {
-            customer: {
-                OR: [
-                    search ? { name: { contains: search } } : {},
-                    phone ? { phone: { contains: phone } } : {},
-                    cnic ? { cnic: { contains: cnic } } : {}
-                ].filter(o => Object.keys(o).length > 0)
-            },
-            items: {
-                some: {}
-            }
-        };
+        query += ' AND (';
+        const orConditions = [];
+        if (search) {
+            orConditions.push('c.name LIKE ?');
+            params.push(`%${search}%`);
+        }
+        if (phone) {
+            orConditions.push('c.phone LIKE ?');
+            params.push(`%${phone}%`);
+        }
+        if (cnic) {
+            orConditions.push('c.cnic LIKE ?');
+            params.push(`%${cnic}%`);
+        }
+        if (orConditions.length > 0) {
+            query += orConditions.join(' OR ') + ')';
+        } else {
+            query = query.replace(' AND (', '');
+        }
     }
 
-    return await prisma.installmentPlan.findMany({
-        where,
-        include: {
-            sale: { include: { customer: true, items: true } },
-            installments: true
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 200
-    });
+    query += ' ORDER BY ip.createdAt DESC LIMIT 200';
+
+    const [plans]: any = await pool.query(query, params);
+
+    // Fetch installments for these plans
+    if (plans.length > 0) {
+        const planIds = plans.map((p: any) => p.id);
+        const [installments]: any = await pool.query(
+            `SELECT * FROM installment WHERE planId IN (${planIds.map(() => '?').join(',')})`,
+            planIds
+        );
+
+        return plans.map((plan: any) => {
+            const { saleInvoiceNo, customerName, customerPhone, customerCnic, ...planData } = plan;
+            return {
+                ...planData,
+                sale: {
+                    invoiceNo: saleInvoiceNo,
+                    customer: customerName ? { name: customerName, phone: customerPhone, cnic: customerCnic } : null
+                },
+                installments: installments.filter((i: any) => i.planId === plan.id)
+            };
+        });
+    }
+    return [];
 };
 
 export const payInstallment = async (id: number, amount: number, paymentMethod: string = 'CASH', referenceId?: string) => {
-    const installment = await prisma.installment.findUnique({ where: { id }, include: { plan: true } });
-    if (!installment) throw new Error('Installment not found');
+    if (amount <= 0) throw new Error('Amount must be greater than 0');
 
-     if (amount <= 0) {
-        throw new Error('Amount must be greater than 0');
-    }
+    const connection = await pool.getConnection();
+    try {
+        await connection.beginTransaction();
 
-    const paidAmount = Number(installment.paidAmount) + amount;
-    let status = 'PARTIALLY_PAID';
-    if (paidAmount >= Number(installment.amount)) {
-        status = 'PAID';
-    }
+        const [installments]: any = await connection.query('SELECT * FROM installment WHERE id = ?', [id]);
+        if (installments.length === 0) throw new Error('installment not found');
+        const installment = installments[0];
 
-    const updatedInstallment = await prisma.installment.update({
-        where: { id },
-        data: {
-            paidAmount,
-            status: status as any,
-            paidAt: new Date(),
-            paymentMethod: paymentMethod as any,
-            referenceId
-        } as any
-    });
-
-    const unpaidCount = await prisma.installment.count({
-        where: {
-            planId: installment?.planId,
-            status: {
-                not: 'PAID'
-            }
+        const paidAmount = Number(installment.paidAmount) + amount;
+        let status = 'PARTIALLY_PAID';
+        if (paidAmount >= Number(installment.amount)) {
+            status = 'PAID';
         }
-    });
 
-    if (unpaidCount === 0) {
-        await prisma.installmentPlan.update({
-            where: { id: installment.planId },
-            data: {
-                status: 'COMPLETED',
-                endDate: new Date()
-            }
-        });
+        await connection.query(
+            `UPDATE installment SET paidAmount = ?, status = ?, paidAt = CURRENT_TIMESTAMP, paymentMethod = ?, referenceId = ? WHERE id = ?`,
+            [paidAmount, status, paymentMethod, referenceId || null, id]
+        );
+
+        const [unpaidCount]: any = await connection.query(
+            `SELECT COUNT(*) as count FROM installment WHERE planId = ? AND status != 'PAID'`,
+            [installment.planId]
+        );
+
+        if (unpaidCount[0].count === 0) {
+            await connection.query(
+                `UPDATE installmentplan SET status = 'COMPLETED', endDate = CURRENT_TIMESTAMP WHERE id = ?`,
+                [installment.planId]
+            );
+        }
+
+        await connection.commit();
+
+        const [updatedInstallment]: any = await pool.query('SELECT * FROM installment WHERE id = ?', [id]);
+        return updatedInstallment[0];
+    } catch (error) {
+        await connection.rollback();
+        throw error;
+    } finally {
+        connection.release();
     }
-
-    return updatedInstallment;
-
 };

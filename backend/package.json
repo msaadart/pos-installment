@@ -24,16 +24,14 @@
     "express": "^5.2.1",
     "helmet": "^8.1.0",
     "morgan": "^1.10.1",
-    "mysql2": "^3.17.1",
+    "mysql2": "^3.18.2",
     "nodemon": "^3.1.11",
-    "prisma": "^5.10.0",
     "reflect-metadata": "^0.2.2",
     "ts-node": "^10.9.2",
     "typeorm": "^0.3.28",
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@prisma/client": "^5.10.0",
     "bcryptjs": "^3.0.3",
     "jsonwebtoken": "^9.0.3",
     "production": "^0.0.2"

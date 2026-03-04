@@ -1,19 +1,16 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import pool from './src/utils/db';
 
 async function test() {
   try {
-    await prisma.$connect();
+    console.log('✅ Testing Database connection...');
+    const [rows]: any = await pool.query('SELECT NOW() as currentTime');
     console.log('✅ Database connected successfully');
-
-    const result = await prisma.$queryRaw`SELECT NOW()`;
-    console.log(result);
+    console.log('Current Database time:', rows[0].currentTime);
 
   } catch (error) {
     console.error('❌ Database connection failed:', error);
   } finally {
-    await prisma.$disconnect();
+    pool.end();
   }
 }
 

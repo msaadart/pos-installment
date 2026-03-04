@@ -1,202 +1,249 @@
-import prisma from '../utils/prisma';
+import pool from '../utils/db';
 
 export const createPurchase = async (data: any) => {
     const { shopId, userId, supplierId, items, totalAmount, paidAmount } = data;
-
     const balance = Number(totalAmount) - (Number(paidAmount) || 0);
     const invoiceNo = data.invoiceNo || `PUR-${Date.now()}`;
 
-    // Transaction: Create Purchase, PurchaseItems, Update Inventory, Update Supplier Balance
-    const purchase = await prisma.$transaction(async (prisma: any) => {
-        // 1. Create Purchase Record
-        const newPurchase = await prisma.purchase.create({
-            data: {
-                invoiceNo,
-                shopId,
-                userId,
-                supplierId,
-                totalAmount,
-                paidAmount: paidAmount || 0,
-                balance,
-                status: 'COMPLETED',
-                items: {
-                    create: items.map((item: any) => ({
-                        productId: item.productId,
-                        quantity: item.quantity,
-                        costPrice: item.costPrice,
-                        subtotal: Number(item.costPrice) * item.quantity
-                    }))
-                }
-            },
-            include: { items: true }
-        });
+    const connection = await pool.getConnection();
+    try {
+        await connection.beginTransaction();
 
-        // 2. Update Inventory (Increment Stock)
+        // 1. Create Purchase
+        const [purchaseResult]: any = await connection.query(
+            `INSERT INTO purchase 
+            (invoiceNo, shopId, userId, supplierId, totalAmount, paidAmount, balance, status) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'COMPLETED')`,
+            [invoiceNo, shopId, userId, supplierId, totalAmount, paidAmount || 0, balance]
+        );
+        const purchaseId = purchaseResult.insertId;
+
+        // Create Items & Update Inventory
         for (const item of items) {
-            await prisma.product.update({
-                where: { id: item.productId },
-                data: { stock: { increment: item.quantity } }
-            });
+            const subtotal = Number(item.costPrice) * item.quantity;
+            await connection.query(
+                `INSERT INTO purchaseitem (purchaseId, productId, quantity, costPrice, subtotal) VALUES (?, ?, ?, ?, ?)`,
+                [purchaseId, item.productId, item.quantity, item.costPrice, subtotal]
+            );
+
+            await connection.query(
+                `UPDATE product SET stock = stock + ? WHERE id = ?`,
+                [item.quantity, item.productId]
+            );
         }
 
-        // 3. Update Supplier Balance
+        // Update Supplier Balance
         if (balance > 0) {
-            await prisma.supplier.update({
-                where: { id: supplierId },
-                data: { balance: { increment: balance } }
-            });
+            await connection.query(
+                `UPDATE supplier SET balance = balance + ? WHERE id = ?`,
+                [balance, supplierId]
+            );
         }
 
-        return newPurchase;
-    });
+        await connection.commit();
 
-    return purchase;
+        const [purchases]: any = await pool.query('SELECT * FROM purchase WHERE id = ?', [purchaseId]);
+        const [purchaseItems]: any = await pool.query('SELECT * FROM purchaseitem WHERE purchaseId = ?', [purchaseId]);
+        return { ...purchases[0], items: purchaseItems };
+    } catch (error) {
+        await connection.rollback();
+        throw error;
+    } finally {
+        connection.release();
+    }
 };
 
 export const getAllPurchases = async (filters: any = {}) => {
     const { search, shopId, supplierId } = filters;
-    const where: any = {};
-    if (shopId) where.shopId = shopId;
-    if (supplierId) where.supplierId = Number(supplierId);
-    if (search) {
-        where.OR = [
-            { invoiceNo: { contains: search } },
-            { supplier: { name: { contains: search } } }
-        ];
+    let query = `
+        SELECT p.*, s.name as supplierName, s.company as supplierCompany, s.phone as supplierPhone, sh.name as shopName 
+        FROM purchase p
+        LEFT JOIN supplier s ON p.supplierId = s.id
+        LEFT JOIN shop sh ON p.shopId = sh.id
+        WHERE 1=1
+    `;
+    const params: any[] = [];
+
+    if (shopId) {
+        query += ' AND p.shopId = ?';
+        params.push(shopId);
     }
-    return await prisma.purchase.findMany({
-        where,
-        include: {
-            supplier: { select: { name: true } },
-            shop: { select: { name: true } }
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 200
+    if (supplierId) {
+        query += ' AND p.supplierId = ?';
+        params.push(supplierId);
+    }
+    if (search) {
+        query += ' AND (p.invoiceNo LIKE ? OR s.name LIKE ?)';
+        params.push(`%${search}%`, `%${search}%`);
+    }
+
+    query += ' ORDER BY p.createdAt DESC LIMIT 200';
+
+    const [rows]: any = await pool.query(query, params);
+    return rows.map((row: any) => {
+        const { supplierName, supplierCompany, supplierPhone, shopName, ...purchaseData } = row;
+        return {
+            ...purchaseData,
+            supplier: { name: supplierName, company: supplierCompany, phone: supplierPhone },
+            shop: { name: shopName }
+        };
     });
 };
 
 export const getPurchaseById = async (id: number) => {
-    return await prisma.purchase.findUnique({
-        where: { id },
-        include: {
-            items: { include: { product: true } },
-            user: true,
-            supplier: true,
-            shop: true
-        }
+    const [purchases]: any = await pool.query(`
+        SELECT p.*, s.name as supplierName, sh.name as shopName, u.name as userName
+        FROM purchase p
+        LEFT JOIN supplier s ON p.supplierId = s.id
+        LEFT JOIN shop sh ON p.shopId = sh.id
+        LEFT JOIN user u ON p.userId = u.id
+        WHERE p.id = ?
+    `, [id]);
+    if (purchases.length === 0) return null;
+    const purchase = purchases[0];
+
+    const [items]: any = await pool.query(`
+        SELECT pi.*, pr.name as productName
+        FROM purchaseitem pi
+        LEFT JOIN product pr ON pi.productId = pr.id
+        WHERE pi.purchaseId = ?
+    `, [id]);
+
+    const mappedItems = items.map((item: any) => {
+        const { productName, ...itemData } = item;
+        return { ...itemData, product: { name: productName } };
     });
+
+    const { supplierName, shopName, userName, ...purchaseData } = purchase;
+    return {
+        ...purchaseData,
+        supplier: { name: supplierName },
+        shop: { name: shopName },
+        user: { name: userName },
+        items: mappedItems
+    };
 };
 
-// --- Supplier Management ---
-
 export const createSupplier = async (data: any) => {
-    return await prisma.supplier.create({ data });
+    const { name, phone, company, balance } = data;
+    const [result]: any = await pool.query(
+        'INSERT INTO supplier (name, phone, company, balance) VALUES (?, ?, ?, COALESCE(?, 0))',
+        [name, phone || null, company || null, balance]
+    );
+    const [rows]: any = await pool.query('SELECT * FROM supplier WHERE id = ?', [result.insertId]);
+    return rows[0];
 };
 
 export const getAllSuppliers = async (filters: any = {}) => {
     const { search } = filters;
-    const where: any = { isActive: true };
+    let query = 'SELECT * FROM supplier WHERE isActive = 1';
+    const params: any[] = [];
     if (search) {
-        where.OR = [
-            { name: { contains: search } },
-            { company: { contains: search } }
-        ];
+        query += ' AND (name LIKE ? OR company LIKE ?)';
+        params.push(`%${search}%`, `%${search}%`);
     }
-    return await prisma.supplier.findMany({
-        where,
-        orderBy: { name: 'asc' },
-        take: 200
-    });
+    query += ' ORDER BY name ASC LIMIT 200';
+    const [rows]: any = await pool.query(query, params);
+    return rows;
 };
 
 export const getSupplierById = async (id: number) => {
-    return await prisma.supplier.findFirst({
-        where: { id, isActive: true },
-        include: { purchases: true }
-    });
+    const [suppliers]: any = await pool.query('SELECT * FROM supplier WHERE id = ? AND isActive = 1', [id]);
+    if (suppliers.length === 0) return null;
+
+    const [purchases]: any = await pool.query('SELECT * FROM purchase WHERE supplierId = ? ORDER BY createdAt DESC', [id]);
+    return { ...suppliers[0], purchases };
 };
 
 export const deleteSupplier = async (id: number) => {
-    return await (prisma.supplier as any).update({
-        where: { id },
-        data: { isActive: false }
-    });
+    await pool.query('UPDATE supplier SET isActive = 0 WHERE id = ?', [id]);
+    const [rows]: any = await pool.query('SELECT * FROM supplier WHERE id = ?', [id]);
+    return rows[0];
 };
 
 export const clearSupplierBalance = async (id: number) => {
-    return await prisma.supplier.update({
-        where: { id },
-        data: { balance: 0 }
-    });
+    await pool.query('UPDATE supplier SET balance = 0 WHERE id = ?', [id]);
+    const [rows]: any = await pool.query('SELECT * FROM supplier WHERE id = ?', [id]);
+    return rows[0];
 };
 
 export const clearPurchaseBalance = async (purchaseId: number, amount: number, method: string, notes: string) => {
-    return await prisma.$transaction(async (tx: any) => {
-        const purchase = await tx.purchase.findUnique({ where: { id: purchaseId } });
-        if (!purchase) throw new Error('Purchase not found');
+    if (amount <= 0) throw new Error('Amount must be greater than zero');
 
-        if (amount > purchase.balance) {
-            throw new Error('Amount exceeds purchase balance');
-        }
+    const connection = await pool.getConnection();
+    try {
+        await connection.beginTransaction();
 
-        if (amount <= 0) {
-            throw new Error('Amount must be greater than zero');
-        }
+        const [purchases]: any = await connection.query('SELECT * FROM purchase WHERE id = ?', [purchaseId]);
+        if (purchases.length === 0) throw new Error('Purchase not found');
+        const purchase = purchases[0];
 
-        if(amount < 0) {
-            throw new Error('Negative values are not allowed');
-        }
+        if (amount > purchase.balance) throw new Error('Amount exceeds purchase balance');
 
         const newPaidAmount = Number(purchase.paidAmount) + amount;
         const newBalance = Number(purchase.totalAmount) - newPaidAmount;
 
         // 1. Update Purchase
-        await tx.purchase.update({
-            where: { id: purchaseId },
-            data: {
-                paidAmount: newPaidAmount,
-                balance: newBalance
-            }
-        });
+        await connection.query(
+            'UPDATE purchase SET paidAmount = ?, balance = ? WHERE id = ?',
+            [newPaidAmount, newBalance, purchaseId]
+        );
 
         // 2. Update Supplier Balance
-        await tx.supplier.update({
-            where: { id: purchase.supplierId },
-            data: {
-                balance: { decrement: amount }
-            }
-        });
+        await connection.query(
+            'UPDATE supplier SET balance = balance - ? WHERE id = ?',
+            [amount, purchase.supplierId]
+        );
 
-        // 3. Log Payment entry
-        await (tx as any).purchasePayment.create({
-            data: {
-                purchaseId,
-                supplierId: purchase.supplierId,
-                shopId: purchase.shopId,
-                amount,
-                method: method, // Defaulting for simple clear
-                notes: notes
-            }
-        });
+        // 3. Log Payment
+        await connection.query(
+            'INSERT INTO purchasepayment (purchaseId, supplierId, shopId, amount, method, notes) VALUES (?, ?, ?, ?, ?, ?)',
+            [purchaseId, purchase.supplierId, purchase.shopId, amount, method, notes || null]
+        );
 
+        await connection.commit();
         return { success: true };
-    });
+    } catch (error) {
+        await connection.rollback();
+        throw error;
+    } finally {
+        connection.release();
+    }
 };
 
 export const getAllPurchasePayments = async (filters: any = {}) => {
     const { supplierId, purchaseId, shopId } = filters;
-    const where: any = {};
-    if (supplierId) where.supplierId = Number(supplierId);
-    if (purchaseId) where.purchaseId = Number(purchaseId);
-    if (shopId) where.shopId = shopId;
+    let query = `
+        SELECT pp.*, s.name as supplierName, p.invoiceNo as purchaseInvoiceNo
+        FROM purchasepayment pp
+        LEFT JOIN supplier s ON pp.supplierId = s.id
+        LEFT JOIN purchase p ON pp.purchaseId = p.id
+        WHERE 1=1
+    `;
+    const params: any[] = [];
 
-    return await prisma.purchasePayment.findMany({
-        where,
-        include: {
-            supplier: { select: { name: true } },
-            purchase: { select: { invoiceNo: true } }
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 200
+    if (supplierId) {
+        query += ' AND pp.supplierId = ?';
+        params.push(supplierId);
+    }
+    if (purchaseId) {
+        query += ' AND pp.purchaseId = ?';
+        params.push(purchaseId);
+    }
+    if (shopId) {
+        query += ' AND pp.shopId = ?';
+        params.push(shopId);
+    }
+
+    query += ' ORDER BY pp.createdAt DESC LIMIT 200';
+
+    const [rows]: any = await pool.query(query, params);
+    return rows.map((row: any) => {
+        const { supplierName, purchaseInvoiceNo, ...paymentData } = row;
+        return {
+            ...paymentData,
+            supplier: { name: supplierName },
+            purchase: { invoiceNo: purchaseInvoiceNo }
+        };
     });
 };

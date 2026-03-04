@@ -1,40 +1,59 @@
-import prisma from '../utils/prisma';
+import pool from '../utils/db';
 
 export const createCustomer = async (data: any) => {
-    return await prisma.customer.create({ data });
+    const { name, phone, address, cnic, balance, creditLimit, shopId } = data;
+    const [result]: any = await pool.query(
+        'INSERT INTO customer (name, phone, address, cnic, balance, creditLimit, shopId) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [name, phone, address || null, cnic || null, balance || 0, creditLimit || 0, shopId || null]
+    );
+    const [rows]: any = await pool.query('SELECT * FROM customer WHERE id = ?', [result.insertId]);
+    return rows[0];
 };
 
 export const getAllCustomers = async (filters: any = {}) => {
     const { search, shopId, limit } = filters;
-    const where: any = { isActive: true };
-    if (shopId) where.shopId = shopId;
-    if (search) {
-        where.OR = [
-            { name: { contains: search } },
-            { phone: { contains: search } },
-            { cnic: { contains: search } }
-        ];
+    let query = 'SELECT * FROM customer WHERE isActive = 1';
+    const params: any[] = [];
+
+    if (shopId) {
+        query += ' AND shopId = ?';
+        params.push(shopId);
     }
-    return await prisma.customer.findMany({
-        where,
-        orderBy: { name: 'asc' },
-        take: 200
-    });
+
+    if (search) {
+        query += ' AND (name LIKE ? OR phone LIKE ? OR cnic LIKE ?)';
+        const searchPattern = `%${search}%`;
+        params.push(searchPattern, searchPattern, searchPattern);
+    }
+
+    query += ' ORDER BY name ASC LIMIT 200';
+
+    const [rows]: any = await pool.query(query, params);
+    return rows;
 };
 
 export const getCustomerById = async (id: number) => {
-    return await prisma.customer.findFirst({
-        where: { id, isActive: true }
-    });
+    const [rows]: any = await pool.query('SELECT * FROM customer WHERE id = ? AND isActive = 1 LIMIT 1', [id]);
+    return rows.length > 0 ? rows[0] : null;
 };
 
 export const updateCustomer = async (id: number, data: any) => {
-    return await prisma.customer.update({ where: { id }, data });
+    const keys = Object.keys(data);
+    if (keys.length === 0) {
+        const [rows]: any = await pool.query('SELECT * FROM customer WHERE id = ?', [id]);
+        return rows[0];
+    }
+    const setClause = keys.map(k => `${k} = ?`).join(', ');
+    const values = keys.map(k => data[k]);
+    values.push(id);
+
+    await pool.query(`UPDATE customer SET ${setClause} WHERE id = ?`, values);
+    const [rows]: any = await pool.query('SELECT * FROM customer WHERE id = ?', [id]);
+    return rows[0];
 };
 
 export const deleteCustomer = async (id: number) => {
-    return await (prisma.customer as any).update({
-        where: { id },
-        data: { isActive: false }
-    });
+    await pool.query('UPDATE customer SET isActive = 0 WHERE id = ?', [id]);
+    const [rows]: any = await pool.query('SELECT * FROM customer WHERE id = ?', [id]);
+    return rows[0];
 };

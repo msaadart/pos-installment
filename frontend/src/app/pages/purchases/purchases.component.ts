@@ -27,6 +27,7 @@ import { AuthService } from '../../services/auth.service';
         <div  style="display: flex; gap: 1rem; margin-bottom: 1rem; align-items: center;">
             <input type="text" class="form-control" [(ngModel)]="newSupplier.name" placeholder="Supplier Name">
             <input type="text" class="form-control" [(ngModel)]="newSupplier.phone" placeholder="Phone">
+            <input type="text" class="form-control" [(ngModel)]="newSupplier.company" placeholder="company">
             <button class="btn btn-primary" (click)="addSupplier()">Save</button>
         </div>
         
@@ -121,6 +122,7 @@ import { AuthService } from '../../services/auth.service';
                 <tr style="text-align: left; border-bottom: 1px solid var(--border-color);">
                     <th style="padding: 1rem;">Invoice #</th>
                     <th style="padding: 1rem;">Supplier</th>
+                    <th style="padding: 1rem;">Phone</th>
                     <th style="padding: 1rem;">Total</th>
                     <th style="padding: 1rem;">Paid</th>
                     <th style="padding: 1rem;">Balance</th>
@@ -130,7 +132,8 @@ import { AuthService } from '../../services/auth.service';
             <tbody>
                 <tr *ngFor="let p of purchases" style="border-bottom: 1px solid var(--border-color);">
                     <td style="padding: 1rem;">{{ p.invoiceNo }}</td>
-                    <td style="padding: 1rem;">{{ p.supplier?.name }}</td>
+                    <td style="padding: 1rem;">{{ p.supplier?.name }}  <small>{{ p.supplier?.company }}</small></td>
+                    <td style="padding: 1rem;">{{ p.supplier?.phone }}</td>
                     <td style="padding: 1rem;">Rs. {{ p.totalAmount | number:'1.2-2' }}</td>
                     <td style="padding: 1rem;">Rs. {{ p.paidAmount | number:'1.2-2' }}</td>
                     <td style="padding: 1rem;">Rs. {{ p.balance | number:'1.2-2' }}</td>
@@ -224,7 +227,7 @@ export class PurchasesComponent implements OnInit {
     showForm = false;
     showSupplierForm = false;
     private toastr = inject<ToastrService>(ToastrService);
-    newSupplier = { name: '', phone: '' };
+    newSupplier = { name: '', phone: '', company: '' };
 
     // Clear Balance State
     clearBalSupplierId: number | null = null;
@@ -295,7 +298,7 @@ export class PurchasesComponent implements OnInit {
             this.toastr.success('Supplier added successfully');
             this.loadData();
             this.showSupplierForm = false;
-            this.newSupplier = { name: '', phone: '' };
+            this.newSupplier = { name: '', phone: '', company: '' };
         });
     }
 

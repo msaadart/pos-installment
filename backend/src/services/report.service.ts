@@ -1,201 +1,281 @@
-import prisma from '../utils/prisma';
+import pool from '../utils/db';
 
 export const getDashboardStats = async (filters: any = {}) => {
-    const { shopId, startDate, endDate } = filters;
+    const { shopId, startDate } = filters;
 
-    const baseFilter: any = {};
-    if (shopId) baseFilter.shopId = shopId;
+    const buildFilters = (table?: string, dateColumn: string = 'createdAt') => {
+        let conditions = ' WHERE 1=1 ';
+        const params: any[] = [];
 
-    // Date filter for models that use createdAt
-    const createdAtFilter: any = {};
-    if (startDate || endDate) {
-        createdAtFilter.createdAt = {};
-        if (startDate) createdAtFilter.createdAt.gte = new Date(startDate);
-        if (endDate) createdAtFilter.createdAt.lte = new Date(endDate);
-    }
+         if (shopId) {
+            conditions += ` AND ${table ? table + '.' : ''}shopId = ?`;
+            params.push(shopId);
+        }
 
-    // Date filter for Expense (uses `date` field)
-    const expenseDateFilter: any = {};
-    if (startDate || endDate) {
-        expenseDateFilter.date = {};
-        if (startDate) expenseDateFilter.date.gte = new Date(startDate);
-        if (endDate) expenseDateFilter.date.lte = new Date(endDate);
-    }
+        if (startDate) {
+            conditions += ` AND ${table ? table + '.' : ''}${dateColumn} >= ?`;
+            params.push(new Date(startDate));
+        }
+
+        if (filters.endDate) {
+            conditions += ` AND ${table ? table + '.' : ''}${dateColumn} <= ?`;
+            params.push(new Date(filters.endDate));
+        }
+
+        return { conditions, params };
+    };
+
+    
+    // Installment Plans
+    const plansFilter = buildFilters('installmentplan');
+    const plansQuery = `
+        SELECT COUNT(*) as cnt 
+        FROM installmentplan 
+        ${plansFilter.conditions}
+        AND status = 'ACTIVE'
+    `;
+
+    // Customers
+    const custFilter = buildFilters('customer');
+    const custQuery = `
+        SELECT COUNT(*) as cnt 
+        FROM customer 
+        ${custFilter.conditions}
+    `;
+
+    // Sales Aggregate
+    const salesFilter = buildFilters('sale');
+    const salesAggQuery = `
+        SELECT SUM(totalAmount) as total 
+        FROM sale 
+        ${salesFilter.conditions}
+    `;
+
+    // Expense Aggregate (uses different date column)
+    const expenseFilter = buildFilters('expense', 'date');
+    const expAggQuery = `
+        SELECT SUM(amount) as total 
+        FROM expense 
+        ${expenseFilter.conditions}
+        AND isActive = 1
+    `;
+
+    // Products (no date filter)
+    const productFilter = buildFilters('product');
+    const prodQuery = `
+        SELECT COUNT(*) as cnt 
+        FROM product 
+        ${productFilter.conditions}
+    `;
+
+    // Users
+    const userFilter = buildFilters('user');
+    const userQuery = `
+        SELECT COUNT(*) as cnt 
+        FROM user 
+        ${userFilter.conditions}
+    `;
+
+    // Shops (no filters)
+    const shopQuery = `SELECT COUNT(*) as cnt FROM shop`;
+
+    // Recent Sales (with alias!)
+    const recentFilter = buildFilters('s');
+    const recentSalesQuery = `
+        SELECT s.*, u.name as userName 
+        FROM sale s
+        LEFT JOIN user u ON s.userId = u.id
+        ${recentFilter.conditions}
+        ORDER BY s.createdAt DESC 
+        LIMIT 200
+    `;
 
     const [
-        activeInstallments,
-        totalCustomers,
-        totalSalesAggregate,
-        totalExpensesAggregate,
-        totalProducts,
-        totalUsers,
-        totalShops,
-        recentSales
-    ] = await Promise.all([
-
-        prisma.installmentPlan.count({
-            where: { ...baseFilter, ...createdAtFilter, status: 'ACTIVE' }
-        }),
-
-        prisma.customer.count({
-            where: { ...baseFilter, ...createdAtFilter }
-        }),
-
-        prisma.sale.aggregate({
-            where: { ...baseFilter, ...createdAtFilter },
-            _sum: { totalAmount: true }
-        }),
-
-        prisma.expense.aggregate({
-            where: { ...baseFilter, ...expenseDateFilter, isActive: true },
-            _sum: { amount: true }
-        }),
-
-        prisma.product.count({
-            where: baseFilter
-        }),
-
-        prisma.user.count({
-            where: { ...baseFilter, ...createdAtFilter }
-        }),
-
-        prisma.shop.count(),
-
-        prisma.sale.findMany({
-            where: { ...baseFilter, ...createdAtFilter },
-            take: 200,
-            orderBy: { createdAt: 'desc' },
-            include: { user: { select: { name: true } } }
-        })
+        [activeInstallments],
+        [totalCustomers],
+        [totalSalesAggregate],
+        [totalExpensesAggregate],
+        [totalProducts],
+        [totalUsers],
+        [totalShops],
+        [recentSales]
+    ]: any = await Promise.all([
+        pool.query(plansQuery, plansFilter.params),
+        pool.query(custQuery, custFilter.params),
+        pool.query(salesAggQuery, salesFilter.params),
+        pool.query(expAggQuery, expenseFilter.params),
+        pool.query(prodQuery, productFilter.params),
+        pool.query(userQuery, userFilter.params),
+        pool.query(shopQuery),
+        pool.query(recentSalesQuery, recentFilter.params)
     ]);
 
     return {
-        totalSales: Number(totalSalesAggregate._sum?.totalAmount) || 0,
-        totalProducts,
-        totalUsers,
-        totalShops,
-        activeInstallmentsCount: activeInstallments,
-        totalCustomers,
-        totalExpenses: Number(totalExpensesAggregate._sum?.amount) || 0,
-        recentSales
+        totalSales: Number(totalSalesAggregate[0]?.total) || 0,
+        totalProducts: totalProducts[0]?.cnt || 0,
+        totalUsers: totalUsers[0]?.cnt || 0,
+        totalShops: totalShops[0]?.cnt || 0,
+        activeInstallmentsCount: activeInstallments[0]?.cnt || 0,
+        totalCustomers: totalCustomers[0]?.cnt || 0,
+        totalExpenses: Number(totalExpensesAggregate[0]?.total) || 0,
+        recentSales: recentSales.map((s: any) => ({
+            ...s,
+            user: { name: s.userName }
+        }))
     };
 };
 
 export const getSalesReport = async (filters: any) => {
     const { startDate, endDate, shopId } = filters;
-    return await prisma.sale.findMany({
-        where: {
-            createdAt: { gte: startDate, lte: endDate },
-            ...(shopId ? { shopId } : {})
-        },
-        include: { items: true, user: { select: { name: true } } },
-        orderBy: { createdAt: 'desc' },
-        take: 200
-    });
+    let query = `
+        SELECT s.*, u.name as userName
+        FROM sale s
+        LEFT JOIN user u ON s.userId = u.id
+        WHERE s.createdAt >= ? AND s.createdAt <= ?
+    `;
+    const params: any[] = [new Date(startDate), new Date(endDate)];
+
+    if (shopId) {
+        query += ' AND s.shopId = ?';
+        params.push(shopId);
+    }
+
+    query += ' ORDER BY s.createdAt DESC LIMIT 200';
+
+    const [rows]: any = await pool.query(query, params);
+    return rows.map((r: any) => ({ ...r, user: { name: r.userName }, items: [] }));
 };
 
 export const getStockReport = async (filters: any = {}) => {
     const { shopId } = filters;
-    return await prisma.product.findMany({
-        where: {
-            stock: { lte: 10 },
-            ...(shopId ? { shopId } : {})
-        },
-        include: { shop: { select: { name: true } } }
-    });
+    let query = `
+        SELECT p.*, s.name as shopName
+        FROM product p
+        LEFT JOIN shop s ON p.shopId = s.id
+        WHERE p.stock <= 10
+    `;
+    const params: any[] = [];
+    if (shopId) {
+        query += ' AND p.shopId = ?';
+        params.push(shopId);
+    }
+
+    const [rows]: any = await pool.query(query, params);
+    return rows.map((r: any) => ({ ...r, shop: { name: r.shopName } }));
 };
 
 export const getInstallmentDueReport = async (filters: any = {}) => {
     const { phone, cnic, shopId } = filters;
-    const where: any = {
-        status: { in: ['PENDING', 'PARTIALLY_PAID'] },
-        dueDate: { lte: new Date() },
-        plan: {
-            sale: shopId ? { shopId } : {}
-        }
-    };
+    let query = `
+        SELECT i.*, 
+            ip.id as planId,
+            c.name as customerName, c.phone as customerPhone, c.cnic as customerCnic
+        FROM installment i
+        JOIN installmentplan ip ON i.planId = ip.id
+        JOIN sale s ON ip.saleId = s.id
+        JOIN customer c ON s.customerId = c.id
+        WHERE i.status IN ('PENDING', 'PARTIALLY_PAID') AND i.dueDate <= CURRENT_TIMESTAMP
+    `;
+    const params: any[] = [];
 
-    if (phone || cnic) {
-        where.plan = {
-            sale: {
-                customer: {
-                    AND: [
-                        phone ? { phone: { contains: phone } } : {},
-                        cnic ? { cnic: { contains: cnic } } : {}
-                    ]
+    if (shopId) {
+        query += ' AND s.shopId = ?';
+        params.push(shopId);
+    }
+
+    if (phone) {
+        query += ' AND c.phone LIKE ?';
+        params.push(`%${phone}%`);
+    }
+
+    if (cnic) {
+        query += ' AND c.cnic LIKE ?';
+        params.push(`%${cnic}%`);
+    }
+
+    query += ' ORDER BY i.dueDate ASC';
+
+    const [rows]: any = await pool.query(query, params);
+    return rows.map((r: any) => {
+        const { planId, customerName, customerPhone, customerCnic, ...instData } = r;
+        return {
+            ...instData,
+            plan: {
+                id: planId,
+                sale: {
+                    customer: { name: customerName, phone: customerPhone, cnic: customerCnic }
                 }
             }
         };
-    }
-
-    return await prisma.installment.findMany({
-        where,
-        include: {
-            plan: {
-                include: {
-                    sale: { include: { customer: true } }
-                }
-            }
-        },
-        orderBy: { dueDate: 'asc' }
     });
 };
 
 export const getCustomerInstallmentSummary = async (filters: any = {}) => {
     const { phone, cnic, shopId } = filters;
-    const customerWhere: any = { isActive: true };
-    if (phone) customerWhere.phone = { contains: phone };
-    if (cnic) customerWhere.cnic = { contains: cnic };
-    if (shopId) customerWhere.shopId = shopId;
 
-    const customers = await prisma.customer.findMany({
-        where: {
-            ...customerWhere,
-            sales: {
-                some: {
-                    saleType: 'INSTALLMENT'
-                }
-            }
-        },
-        include: {
-            sales: {
-                where: { saleType: 'INSTALLMENT' },
-                include: {
-                    installmentPlan: {
-                        include: { installments: true }
-                    }
-                }
-            }
+    let query = `
+        SELECT c.id, c.name,
+               ip.id as planId,
+               i.amount, i.paidAmount, i.status, i.dueDate
+        FROM customer c
+        JOIN sale s ON s.customerId = c.id AND s.saleType = 'INSTALLMENT'
+        JOIN installmentplan ip ON ip.saleId = s.id
+        JOIN installment i ON i.planId = ip.id
+        WHERE c.isActive = 1
+    `;
+    const params: any[] = [];
+
+    if (phone) {
+        query += ' AND c.phone LIKE ?';
+        params.push(`%${phone}%`);
+    }
+    if (cnic) {
+        query += ' AND c.cnic LIKE ?';
+        params.push(`%${cnic}%`);
+    }
+    if (shopId) {
+        query += ' AND c.shopId = ?';
+        params.push(shopId);
+    }
+
+    const [rows]: any = await pool.query(query, params);
+
+    const customersMap = new Map();
+    rows.forEach((r: any) => {
+        if (!customersMap.has(r.id)) {
+            customersMap.set(r.id, {
+                name: r.name,
+                totalItems: new Set(),
+                totalPaid: 0,
+                remainingBalance: 0,
+                dueAmount: 0
+            });
+        }
+
+        const c = customersMap.get(r.id);
+        c.totalItems.add(r.planId);
+
+        const amount = Number(r.amount);
+        const paid = Number(r.paidAmount);
+
+        c.totalPaid += paid;
+        c.remainingBalance += (amount - paid);
+
+        if (r.status !== 'PAID' && new Date(r.dueDate) <= new Date()) {
+            c.dueAmount += (amount - paid);
         }
     });
 
-    return customers.map(c => {
-        let totalItems = 0;
-        let totalPaid = 0;
-        let totalRemaining = 0;
-        let totalDue = 0;
-
-        c.sales.forEach(s => {
-            if (s.installmentPlan) {
-                totalItems++;
-                s.installmentPlan.installments.forEach(inst => {
-                    const amount = Number(inst.amount);
-                    const paid = Number(inst.paidAmount);
-                    totalPaid += paid;
-                    totalRemaining += (amount - paid);
-                    if (inst.status !== 'PAID' && new Date(inst.dueDate) <= new Date()) {
-                        totalDue += (amount - paid);
-                    }
-                });
-            }
+    const result: any[] = [];
+    customersMap.forEach((val) => {
+        result.push({
+            name: val.name,
+            totalItems: val.totalItems.size,
+            totalPaid: val.totalPaid,
+            remainingBalance: val.remainingBalance,
+            dueAmount: val.dueAmount
         });
-
-        return {
-            name: c.name,
-            totalItems,
-            totalPaid,
-            remainingBalance: totalRemaining,
-            dueAmount: totalDue
-        };
     });
+
+    return result;
 };
