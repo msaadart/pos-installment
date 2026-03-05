@@ -1,0 +1,99 @@
+<div class="pos-container">
+    <!-- Product Selection -->
+    <div class="card product-section">
+        <h2>Products</h2>
+        <div class="search-wrapper">
+            <input type="text" class="form-control" placeholder="Search product..." (input)="filterProducts($event)">
+        </div>
+        @defer{
+        <div class="product-grid">
+            <div *ngFor="let product of filteredProducts" class="product-card" (click)="addToCart(product)">
+                <div class="img-wrapper">
+                    <img [ngSrc]="product.imageUrl ? apiUrl + product.imageUrl : 'assets/placeholder.png'"
+                        [alt]="product.name" width="100" height="100">
+                </div>
+                <div class="product-info">
+                    <h4>{{ product.name }}</h4>
+                    <p class="price">Rs. {{ product.price | number:'1.2-2' }}</p>
+                    <p class="stock">Stock: {{ product.stock }}</p>
+                </div>
+            </div>
+        </div>
+        }@placeholder{
+        <div class="loading-state">
+            Loading products...
+        </div>
+        }
+    </div>
+
+    <!-- Cart & Checkout -->
+    <div class="card checkout-section">
+        <h2>Checkout</h2>
+        <div *ngIf="cart.length === 0" class="empty-cart">
+            Cart is empty
+        </div>
+
+        <div *ngFor="let item of cart; let i = index" class="cart-item">
+            <div class="cart-item-details">
+                <div class="item-name">{{ item.productName }}</div>
+                <div class="item-edit">
+                    {{ item.quantity }} x
+                    <input type="number" [(ngModel)]="item.price" class="price-input">
+                </div>
+            </div>
+            <div class="cart-item-action">
+                <span class="subtotal">Rs. {{ (item.quantity * item.price) | number:'1.2-2' }}</span>
+                <button class="btn btn-danger btn-sm" (click)="removeFromCart(i)">&times;</button>
+            </div>
+        </div>
+
+        <div class="checkout-form-section">
+            <div class="form-group">
+                <label class="form-label">Sale Type</label>
+                <select class="form-control custom-select" [(ngModel)]="saleType">
+                    <option value="CASH">CASH</option>
+                    <option value="INSTALLMENT">INSTALLMENT</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Customer</label>
+                <select class="form-control custom-select" [(ngModel)]="selectedCustomerId"
+                    [class.is-invalid]="submitted && !selectedCustomerId">
+                    <option *ngFor="let customer of activeCustomers" [value]="customer.id">{{ customer.name }} ({{
+                        customer.phone }})</option>
+                </select>
+                <div class="invalid-feedback" *ngIf="submitted && !selectedCustomerId">
+                    Customer is required
+                </div>
+            </div>
+
+            <div *ngIf="saleType === 'INSTALLMENT'" class="installment-fields">
+                <div class="form-group">
+                    <label class="form-label">Down Payment</label>
+                    <input type="number" class="form-control" [(ngModel)]="downPayment">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Duration (Months)</label>
+                    <input type="number" class="form-control" [(ngModel)]="duration">
+                </div>
+            </div>
+        </div>
+
+        <div class="checkout-summary">
+            <div class="summary-row total-row">
+                <span>Total:</span>
+                <span>Rs. {{ total | number:'1.2-2' }}</span>
+            </div>
+            <div *ngIf="saleType === 'INSTALLMENT'" class="summary-row remaining-row">
+                <span>Remaining:</span>
+                <span>Rs. {{ (total - downPayment) | number:'1.2-2' }}</span>
+            </div>
+        </div>
+
+        <button class="btn btn-primary btn-checkout"
+            [disabled]="cart.length === 0 || (saleType === 'INSTALLMENT' && !selectedCustomerId)" (click)="checkout()">
+            Complete {{ saleType }} Sale
+        </button>
+    </div>
+</div>

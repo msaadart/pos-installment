@@ -1,1 +1,52 @@
-<p>main-layout works!</p>
+<div class="app-layout">
+  <!-- Mobile Header -->
+  <header class="mobile-header">
+    <button class="menu-toggle" (click)="toggleMobileMenu()">
+      <span class="hamburger"></span>
+    </button>
+    <h2 class="mobile-title">giftokarachi.com</h2>
+  </header>
+
+  <!-- Overlay for Mobile Sidebar -->
+  <div class="sidebar-overlay" [class.active]="isMobileMenuOpen" (click)="closeMobileMenu()"></div>
+
+  <aside class="sidebar" [class.mobile-open]="isMobileMenuOpen">
+    <div class="sidebar-header">
+      <div class="header-top">
+        <h2>giftokarachi.com</h2>
+        <button class="close-menu d-mobile" (click)="closeMobileMenu()">&times;</button>
+      </div>
+      
+      <!-- Shop Selector for Super Admin -->
+      <div class="shop-selector">
+        <label>SELECT SHOP</label>
+        <select class="shop-dropdown" [(ngModel)]="selectedShopId" (change)="onShopChange()" 
+        [disabled]="user?.role !== 'SUPER_ADMIN'">
+          <option [value]="null">All Shops</option>
+          <option *ngFor="let shop of shops" [value]="shop.id">{{ shop.name }}</option>
+        </select>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a routerLink="/dashboard" routerLinkActive="active" class="nav-item" (click)="closeMobileMenu()">Dashboard</a>
+      <a routerLink="/pos" routerLinkActive="active" class="nav-item" (click)="closeMobileMenu()">POS (Sales)</a>
+      <a routerLink="/installments" routerLinkActive="active" class="nav-item" (click)="closeMobileMenu()">Installment Plans</a>
+      <a routerLink="/customers" routerLinkActive="active" class="nav-item" (click)="closeMobileMenu()">Customers</a>
+      <a routerLink="/products" routerLinkActive="active" class="nav-item" (click)="closeMobileMenu()">Products</a>
+      <a *ngIf="['SUPER_ADMIN', 'SHOP_ADMIN'].includes(user?.role)" routerLink="/purchases" routerLinkActive="active" class="nav-item" (click)="closeMobileMenu()">Purchases</a>
+      <a routerLink="/expenses" routerLinkActive="active" class="nav-item" (click)="closeMobileMenu()">Expenses</a>
+      <a *ngIf="user?.role === 'SUPER_ADMIN'" routerLink="/shops" routerLinkActive="active" class="nav-item" (click)="closeMobileMenu()">Shops</a>
+      <a *ngIf="['SUPER_ADMIN'].includes(user?.role)" routerLink="/users" routerLinkActive="active" class="nav-item" (click)="closeMobileMenu()">Users</a>
+      <a routerLink="/reports" routerLinkActive="active" class="nav-item" (click)="closeMobileMenu()">Reports</a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="btn btn-danger btn-block" (click)="logout()">Logout</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <router-outlet></router-outlet>
+  </main>
+</div>

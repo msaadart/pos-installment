@@ -1,0 +1,174 @@
+<div class="page-container">
+    <div class="content-wrapper">
+        <div class="page-header">
+            <h2>Product Management</h2>
+            <div class="header-actions" *ngIf="['SUPER_ADMIN', 'SHOP_ADMIN'].includes(user?.role)">
+                <button class="btn btn-secondary" (click)="showCategoryForm = !showCategoryForm">
+                    <span class="d-mobile-none">Add </span>Category
+                </button>
+                <button class="btn btn-secondary" (click)="showBrandForm = !showBrandForm">
+                    <span class="d-mobile-none">Add </span>Brand
+                </button>
+                <button class="btn btn-primary" (click)="toggleForm()">
+                    <span class="icon">{{ showForm ? '&times;' : '+' }}</span> <span class="d-mobile-none">New
+                        Product</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Category Form -->
+        <div *ngIf="showCategoryForm" class="card form-card mb-3 border-secondary">
+            <h3>New Category</h3>
+            <div class="d-flex gap-2">
+                <input type="text" class="form-control" [(ngModel)]="newCategoryName" placeholder="Category Name">
+                <button class="btn btn-secondary" (click)="addCategory()">Save</button>
+            </div>
+        </div>
+
+        <!-- Brand Form -->
+        <div *ngIf="showBrandForm" class="card form-card mb-3 border-secondary">
+            <h3>New Brand</h3>
+            <div class="d-flex gap-2">
+                <input type="text" class="form-control" [(ngModel)]="newBrandName" placeholder="Brand Name">
+                <button class="btn btn-secondary" (click)="addBrand()">Save</button>
+            </div>
+        </div>
+
+        <!-- Add Product Form -->
+        <div *ngIf="showForm" class="card form-card mb-4 border-primary">
+            <h3>{{ isEditing ? 'Edit Product' : 'New Product' }}</h3>
+            <form [formGroup]="productForm" (ngSubmit)="onSubmit()" class="responsive-form">
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control" formControlName="name">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label class="form-label">SKU</label>
+                        <input type="text" class="form-control" formControlName="sku">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-sm-6">
+                        <label class="form-label">Price</label>
+                        <input type="number" class="form-control" formControlName="price">
+                    </div>
+                    <div class="form-group col-sm-6">
+                        <label class="form-label">Cost Price</label>
+                        <input type="number" class="form-control" formControlName="costPrice">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-sm-6">
+                        <label class="form-label">Stock</label>
+                        <input type="number" class="form-control" formControlName="stock">
+                    </div>
+                    <div class="form-group col-sm-6">
+                        <label class="form-label">Shop</label>
+                        <select class="form-control custom-select" formControlName="shopId">
+                            <option *ngFor="let shop of shops" [value]="shop.id">{{ shop.name }}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label class="form-label">Category</label>
+                        <select class="form-control custom-select" formControlName="categoryId">
+                            <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label class="form-label">Brand</label>
+                        <select class="form-control custom-select" formControlName="brandId">
+                            <option *ngFor="let brand of brands" [value]="brand.id">{{ brand.name }}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label class="form-label">Barcode</label>
+                        <input type="text" class="form-control" formControlName="barcode">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label class="form-label">Product Image</label>
+                        <input type="file" class="form-control" (change)="onFileSelected($event)" accept="image/*">
+                        <div *ngIf="imagePreview" class="img-preview mt-2">
+                            <img [src]="imagePreview" alt="Preview">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group full-width">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-control" formControlName="description" rows="3"></textarea>
+                </div>
+
+                <div class="form-actions mt-3">
+                    <button type="submit" class="btn btn-primary" [disabled]="productForm.invalid">
+                        {{ isEditing ? 'Update' : 'Create' }} Product
+                    </button>
+                    <button type="button" class="btn btn-secondary" (click)="cancelEdit()">Cancel</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Product List -->
+        <div class="card">
+            <div class="search-bar">
+                <input type="text" class="form-control search-input" [(ngModel)]="searchTerm"
+                    placeholder="Search products by name or SKU..." (keyup.enter)="onSearch()">
+                <button class="btn btn-primary" (click)="onSearch()">Search</button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Photo</th>
+                            <th>Name</th>
+                            <th>SKU</th>
+                            <th>Price</th>
+                            <th>Stock</th>
+                            <th>Category</th>
+                            <th>Brand</th>
+                            <th *ngIf="['SUPER_ADMIN', 'SHOP_ADMIN'].includes(user?.role)">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let product of products">
+                            <td data-label="Photo">
+                                <div class="product-img">
+                                    <img *ngIf="product.imageUrl" [ngSrc]="apiUrl + product.imageUrl" width="50"
+                                        height="50" alt="{{ product.name }}">
+                                    <span *ngIf="!product.imageUrl" class="no-img">-</span>
+                                </div>
+                            </td>
+                            <td data-label="Name" class="font-weight-bold">{{ product.name }}</td>
+                            <td data-label="SKU">{{ product.sku }}</td>
+                            <td data-label="Price" class="text-primary font-weight-bold">Rs. {{ product.price |
+                                number:'1.2-2' }}</td>
+                            <td data-label="Stock">
+                                <span class="badge"
+                                    [ngClass]="product.stock > 10 ? 'badge-success' : (product.stock > 0 ? 'badge-warning' : 'badge-danger')">
+                                    {{ product.stock }}
+                                </span>
+                            </td>
+                            <td data-label="Category">{{ product.category?.name || '-' }}</td>
+                            <td data-label="Brand">{{ product.brand?.name || '-' }}</td>
+                            <td data-label="Actions" *ngIf="['SUPER_ADMIN', 'SHOP_ADMIN'].includes(user?.role)">
+                                <button class="btn btn-secondary btn-sm" (click)="editProduct(product)">Edit</button>
+                            </td>
+                        </tr>
+                        <tr *ngIf="products.length === 0">
+                            <td colspan="8" class="text-center py-4 text-muted">No products found.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

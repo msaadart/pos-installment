@@ -1,1 +1,71 @@
-<p>dashboard works!</p>
+<div *ngIf="user$ | async as user" class="page-container">
+    <div class="content-wrapper">
+        <!-- Filters -->
+        <div class="card filter-card">
+            <div class="filter-group">
+                <label class="form-label d-mobile-none">Start Date</label>
+                <input type="date" class="form-control" [(ngModel)]="startDate" placeholder="Start Date">
+            </div>
+            <div class="filter-group">
+                <label class="form-label d-mobile-none">End Date</label>
+                <input type="date" class="form-control" [(ngModel)]="endDate" placeholder="End Date">
+            </div>
+            <div class="filter-actions">
+                <button class="btn btn-primary" (click)="loadStats()">Search</button>
+                <button class="btn btn-secondary" (click)="resetFilters()">Reset</button>
+            </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div *ngIf="stats" class="stats-grid">
+            <div class="stat-card primary-border">
+                <h3>Total Sales</h3>
+                <p class="text-primary">Rs. {{ stats.totalSales | number:'1.2-2' }}</p>
+            </div>
+            <div class="stat-card danger-border">
+                <h3>Total Expenses</h3>
+                <p class="text-danger">Rs. {{ stats.totalExpenses | number:'1.2-2' }}</p>
+            </div>
+            <div class="stat-card secondary-border">
+                <h3>Total Products</h3>
+                <p class="text-secondary">{{ stats.totalProducts }}</p>
+            </div>
+            <div class="stat-card accent-border">
+                <h3>Active Installments</h3>
+                <p class="text-accent">{{ stats.activeInstallmentsCount }}</p>
+            </div>
+            <div class="stat-card custom-border">
+                <h3>Total Customers</h3>
+                <p class="text-custom">{{ stats.totalCustomers }}</p>
+            </div>
+        </div>
+
+        <!-- Recent Sales Table -->
+        <div *ngIf="stats?.recentSales" class="card mt-2">
+            <div class="card-header">
+                <h3>Recent Sales</h3>
+            </div>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Invoice</th>
+                            <th>Date</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let sale of stats.recentSales">
+                            <td>{{ sale.invoiceNo }}</td>
+                            <td>{{ sale.createdAt | date:'shortDate' }}</td>
+                            <td class="font-weight-bold">Rs. {{ sale.totalAmount | number:'1.2-2' }}</td>
+                        </tr>
+                        <tr *ngIf="stats.recentSales.length === 0">
+                            <td colspan="3" class="text-center py-3">No recent sales found.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

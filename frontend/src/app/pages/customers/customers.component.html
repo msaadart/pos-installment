@@ -1,0 +1,101 @@
+<div class="page-container">
+    <div class="content-wrapper">
+        <div class="page-header">
+            <h2>Customer Management</h2>
+            <button class="btn btn-primary" (click)="toggleForm()">
+                <span class="icon">{{ showForm ? '&times;' : '+' }}</span> {{ showForm ? 'Close' : 'New Customer' }}
+            </button>
+        </div>
+
+        <!-- Add/Edit Form -->
+        <div *ngIf="showForm" class="card form-card">
+            <div class="card-header">
+                <h3>{{ editMode ? 'Edit' : 'New' }} Customer</h3>
+            </div>
+            <form [formGroup]="customerForm" (ngSubmit)="onSubmit()" class="responsive-form">
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control" formControlName="name" placeholder="Customer Name">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label class="form-label">Phone</label>
+                        <input type="text" class="form-control" formControlName="phone" placeholder="Phone Number">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label class="form-label">CNIC (Optional)</label>
+                        <input type="text" class="form-control" formControlName="cnic" placeholder="12345-6789012-3">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label class="form-label">Credit Limit (Optional)</label>
+                        <input type="number" class="form-control" formControlName="creditLimit" placeholder="Amount">
+                    </div>
+                </div>
+
+                <div class="form-group full-width">
+                    <label class="form-label">Address</label>
+                    <textarea class="form-control" formControlName="address" rows="2"
+                        placeholder="Full Address"></textarea>
+                </div>
+
+                <div class="form-actions mt-3">
+                    <button type="submit" class="btn btn-primary" [disabled]="customerForm.invalid">
+                        {{ editMode ? 'Update' : 'Create' }} Customer
+                    </button>
+                    <button type="button" class="btn btn-secondary" (click)="toggleForm()">Cancel</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Search & Table -->
+        <div class="card">
+            <div class="search-bar">
+                <input type="text" class="form-control search-input" placeholder="Search by name, phone or cnic..."
+                    [(ngModel)]="searchTerm" (keyup.enter)="onSearch()">
+                <button class="btn btn-primary" (click)="onSearch()">Search</button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Phone</th>
+                            <th>CNIC</th>
+                            <th>Address</th>
+                            <th>Is Active</th>
+                            <th>Credit Limit</th>
+                            <th *ngIf="['SUPER_ADMIN', 'SHOP_ADMIN'].includes(user?.role)">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let c of filteredCustomers">
+                            <td data-label="Name" class="font-weight-bold">{{ c.name }}</td>
+                            <td data-label="Phone">{{ c.phone }}</td>
+                            <td data-label="CNIC">{{ c.cnic || '-' }}</td>
+                            <td data-label="Address">{{ c.address }}</td>
+                            <td data-label="Is Active">
+                                <span class="badge" [ngClass]="c.isActive ? 'badge-success' : 'badge-danger'">{{
+                                    c.isActive ? 'Yes' : 'No' }}</span>
+                            </td>
+                            <td data-label="Credit Limit">Rs. {{ c.creditLimit | number:'1.2-2' }}</td>
+                            <td data-label="Actions" *ngIf="['SUPER_ADMIN', 'SHOP_ADMIN'].includes(user?.role)">
+                                <div class="action-buttons">
+                                    <button class="btn btn-secondary btn-sm" (click)="editCustomer(c)">Edit</button>
+                                    <button class="btn btn-danger btn-sm"
+                                        (click)="deleteCustomer(c.id)">Inactive</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr *ngIf="filteredCustomers.length === 0">
+                            <td colspan="7" class="text-center py-4 text-muted">No customers found</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

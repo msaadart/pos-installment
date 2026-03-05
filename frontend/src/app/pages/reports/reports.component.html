@@ -1,0 +1,184 @@
+<div class="page-container">
+    <div class="content-wrapper">
+        <div class="page-header d-print-none">
+            <h2>Reports</h2>
+            <button class="btn btn-primary" (click)="downloadPDF()">Download PDF</button>
+        </div>
+
+        <div class="tabs-container d-print-none">
+            <div class="tabs">
+                <button class="tab-btn" [class.active]="activeTab === 'sales'" (click)="setTab('sales')">Sales</button>
+                <button class="tab-btn" [class.active]="activeTab === 'stock'" (click)="setTab('stock')">Low
+                    Stock</button>
+                <button class="tab-btn" [class.active]="activeTab === 'due'" (click)="setTab('due')">Installments
+                    Due</button>
+                <button class="tab-btn" [class.active]="activeTab === 'summary'" (click)="setTab('summary')">Customer
+                    Summary</button>
+            </div>
+
+            <div class="tab-actions" *ngIf="['due', 'summary'].includes(activeTab)">
+                <div class="form-group mb-0">
+                    <input type="text" class="form-control" placeholder="Phone..." [(ngModel)]="searchPhone"
+                        (keyup.enter)="loadCurrentTab()">
+                </div>
+                <div class="form-group mb-0">
+                    <input type="text" class="form-control" placeholder="CNIC..." [(ngModel)]="searchCNIC"
+                        (keyup.enter)="loadCurrentTab()">
+                </div>
+                <button class="btn btn-secondary" (click)="loadCurrentTab()">Search</button>
+            </div>
+        </div>
+
+        <div class="reports-content">
+            <!-- Sales Report -->
+            <div *ngIf="activeTab === 'sales'" class="card report-card">
+                <h3 class="print-visible">Sales Report</h3>
+                <div class="report-filters d-print-none pb-3 mb-3 border-bottom">
+                    <div class="form-group mb-0">
+                        <label class="form-label d-mobile-block small text-muted">Start Date</label>
+                        <input type="date" class="form-control" [(ngModel)]="startDate">
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="form-label d-mobile-block small text-muted">End Date</label>
+                        <input type="date" class="form-control" [(ngModel)]="endDate">
+                    </div>
+                    <button class="btn btn-primary mt-mobile" (click)="loadSales()">Generate</button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Invoice</th>
+                                <th>Date</th>
+                                <th>User</th>
+                                <th>Amount</th>
+                                <th>Type</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let sale of sales">
+                                <td data-label="Invoice" class="font-weight-bold">{{ sale.invoiceNo }}</td>
+                                <td data-label="Date">{{ sale.createdAt | date }}</td>
+                                <td data-label="User">{{ sale.user?.name }}</td>
+                                <td data-label="Amount" class="font-weight-bold text-success">Rs. {{ sale.totalAmount |
+                                    number:'1.2-2' }}</td>
+                                <td data-label="Type">
+                                    <span class="badge"
+                                        [ngClass]="sale.saleType === 'CASH' ? 'badge-primary' : 'badge-warning'">{{
+                                        sale.saleType }}</span>
+                                </td>
+                            </tr>
+                            <tr *ngIf="sales.length === 0">
+                                <td colspan="5" class="text-center py-4 text-muted">No sales found for the selected
+                                    period.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Low Stock Report -->
+            <div *ngIf="activeTab === 'stock'" class="card report-card">
+                <h3 class="print-visible">Low Stock Report</h3>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Current Stock</th>
+                                <th>Min Stock</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let item of stock">
+                                <td data-label="Product" class="font-weight-bold">{{ item.name }}</td>
+                                <td data-label="Current Stock" class="font-weight-bold text-danger">{{ item.stock }}
+                                </td>
+                                <td data-label="Min Stock">{{ item.minStock }}</td>
+                                <td data-label="Status"><span class="badge badge-danger">Reorder</span></td>
+                            </tr>
+                            <tr *ngIf="stock.length === 0">
+                                <td colspan="4" class="text-center py-4 text-muted">No low stock items found.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Installments Due -->
+            <div *ngIf="activeTab === 'due'" class="card report-card">
+                <h3 class="print-visible">Installments Due / Overdue</h3>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Due Date</th>
+                                <th>Amount</th>
+                                <th>Balance</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let item of dueInstallments">
+                                <td data-label="Customer" class="font-weight-bold">{{ item.plan.sale.customer?.name }}
+                                </td>
+                                <td data-label="Due Date">{{ item.dueDate | date }}</td>
+                                <td data-label="Amount">Rs. {{ item.amount | number:'1.2-2' }}</td>
+                                <td data-label="Balance" class="font-weight-bold text-danger">Rs. {{ (item.amount -
+                                    item.paidAmount) | number:'1.2-2' }}</td>
+                                <td data-label="Status">
+                                    <span class="badge"
+                                        [ngClass]="isOverdue(item.dueDate) ? 'badge-danger' : 'badge-warning'">
+                                        {{ isOverdue(item.dueDate) ? 'OVERDUE' : 'DUE' }}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr *ngIf="dueInstallments.length === 0">
+                                <td colspan="5" class="text-center py-4 text-muted">No installments due found for the
+                                    selected criteria.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Customer Summary -->
+            <div *ngIf="activeTab === 'summary'" class="card report-card">
+                <h3 class="print-visible">Customer Installment Summary</h3>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Active Plans</th>
+                                <th>Paid So Far</th>
+                                <th>Remaining</th>
+                                <th>Currently Due</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let item of customerSummary">
+                                <td data-label="Customer" class="font-weight-bold">{{ item.name }}</td>
+                                <td data-label="Active Plans">
+                                    <span class="badge badge-secondary">{{ item.totalItems }}</span>
+                                </td>
+                                <td data-label="Paid So Far" class="text-success">Rs. {{ item.totalPaid | number:'1.2-2'
+                                    }}</td>
+                                <td data-label="Remaining">Rs. {{ item.remainingBalance | number:'1.2-2' }}</td>
+                                <td data-label="Currently Due" class="font-weight-bold text-danger">Rs. {{
+                                    item.dueAmount | number:'1.2-2' }}</td>
+                            </tr>
+                            <tr *ngIf="customerSummary.length === 0">
+                                <td colspan="5" class="text-center py-4 text-muted">No customer summary found for the
+                                    selected criteria.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

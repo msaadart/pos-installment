@@ -1,1 +1,37 @@
-<p>login works!</p>
+<div class="login-container">
+    <div class="card login-card">
+        <div class="login-header">
+            <h2>giftokarachi.com</h2>
+            <p>Sign in to your account</p>
+        </div>
+
+        <div *ngIf="error" class="alert alert-danger">
+            {{ error }}
+        </div>
+
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control" formControlName="email" placeholder="Enter your email">
+                <div *ngIf="loginForm.get('email')?.touched && loginForm.get('email')?.invalid"
+                    class="text-danger small mt-1">
+                    Valid email is required
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" class="form-control" formControlName="password"
+                    placeholder="Enter your password">
+                <div *ngIf="loginForm.get('password')?.touched && loginForm.get('password')?.invalid"
+                    class="text-danger small mt-1">
+                    Password is required
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block" [disabled]="loginForm.invalid || loading">
+                {{ loading ? 'Signing in...' : 'Sign In' }}
+            </button>
+        </form>
+    </div>
+</div>

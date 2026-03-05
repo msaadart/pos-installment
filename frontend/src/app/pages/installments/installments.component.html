@@ -1,0 +1,202 @@
+<div class="page-container">
+    <div class="content-wrapper">
+        <div class="page-header">
+            <h2>Installment Plans</h2>
+        </div>
+
+        <div class="card search-card">
+            <div class="search-form">
+                <div class="form-group">
+                    <label class="form-label">Phone</label>
+                    <input type="text" class="form-control" placeholder="Search by Phone..." [(ngModel)]="searchPhone"
+                        (keyup.enter)="loadPlans()">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">CNIC</label>
+                    <input type="text" class="form-control" placeholder="Search by CNIC..." [(ngModel)]="searchCNIC"
+                        (keyup.enter)="loadPlans()">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select class="form-control custom-select" [(ngModel)]="searchStatus" (change)="loadPlans()">
+                        <option value="">All Statuses</option>
+                        <option value="ACTIVE">ACTIVE</option>
+                        <option value="COMPLETED">COMPLETED</option>
+                    </select>
+                </div>
+                <div class="search-actions">
+                    <button class="btn btn-primary" (click)="loadPlans()">Search</button>
+                    <button class="btn btn-secondary" (click)="resetFilters()">Clear</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Customer</th>
+                            <th>Total Amount</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let plan of plans">
+                            <td data-label="ID">{{ plan.id }}</td>
+                            <td data-label="Customer">
+                                {{ plan.sale.customer?.name || 'Walk-in' }}
+                                <span class="d-block small text-muted">CNIC: {{ plan.sale.customer?.cnic || '-'
+                                    }}</span>
+                            </td>
+                            <td data-label="Total Amount" class="font-weight-bold">Rs. {{ plan.totalAmount |
+                                number:'1.2-2' }}</td>
+                            <td data-label="Start Date">{{ plan.startDate | date }}</td>
+                            <td data-label="End Date">{{ plan.endDate | date }}</td>
+                            <td data-label="Status">
+                                <span class="badge"
+                                    [ngClass]="plan.status === 'ACTIVE' ? 'badge-success' : 'badge-secondary'">
+                                    {{ plan.status }}
+                                </span>
+                            </td>
+                            <td data-label="Actions" class="action-buttons">
+                                <button class="btn btn-primary btn-sm" (click)="viewDetails(plan)">View</button>
+                                <button class="btn btn-secondary btn-sm" (click)="printFullPlan(plan)">Print
+                                    Plan</button>
+                            </td>
+                        </tr>
+                        <tr *ngIf="plans.length === 0">
+                            <td colspan="7" class="text-center py-4 text-muted">No installment plans found.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Details Modal -->
+        <div *ngIf="selectedPlan" class="card details-card border-primary">
+            <div class="details-header">
+                <h3>Plan #{{ selectedPlan.id }} Details</h3>
+                <button class="btn btn-secondary btn-sm" (click)="selectedPlan = null">Close</button>
+            </div>
+
+            <div class="details-grid">
+                <div class="details-col">
+                    <p><strong>Customer:</strong> {{ selectedPlan.sale.customer?.name }} </p>
+                    <p><strong>Phone:</strong> {{ selectedPlan.sale.customer?.phone }}</p>
+                    <p><strong>Monthly Installment:</strong> <span class="text-primary font-weight-bold">Rs. {{
+                            selectedPlan.monthlyInstallment | number:'1.2-2' }}</span></p>
+                </div>
+                <div class="details-col">
+                    <p><strong>Total Amount:</strong> Rs. {{ selectedPlan.totalAmount | number:'1.2-2' }}</p>
+                    <p><strong>Down Payment:</strong> Rs. {{ selectedPlan.downPayment | number:'1.2-2' }}</p>
+                    <p><strong>Remaining Balance:</strong> <span class="text-danger font-weight-bold">Rs. {{
+                            getRemaining(selectedPlan) | number:'1.2-2' }}</span></p>
+                </div>
+            </div>
+
+            <h4 class="mt-4 mb-2 schedule-title">Payment Schedule</h4>
+            <div class="table-responsive">
+                <table class="data-table compact-table">
+                    <thead>
+                        <tr>
+                            <th>Due Date</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Payment Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let inst of selectedPlan.installments">
+                            <td data-label="Due Date">{{ inst.dueDate | date }}</td>
+                            <td data-label="Amount" class="font-weight-bold">Rs. {{ inst.amount | number:'1.2-2' }}</td>
+                            <td data-label="Status">
+                                <span class="badge"
+                                    [ngClass]="inst.status === 'PAID' ? 'badge-success' : 'badge-danger'">{{ inst.status
+                                    }}</span>
+                            </td>
+                            <td data-label="Payment Date">{{ inst.paidAt | date:'shortDate' || '-' }}</td>
+                            <td data-label="Action" class="text-right">
+                                <button *ngIf="inst.status !== 'PAID'" class="btn btn-primary btn-sm"
+                                    (click)="openPayModal(inst)">Pay</button>
+                                <button *ngIf="inst.status === 'PAID'" class="btn btn-secondary btn-sm"
+                                    (click)="printReceipt(selectedPlan, inst)">Receipt</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Payment Modal Overlay -->
+        <div *ngIf="showPayModal" class="modal-overlay">
+            <div class="card modal-card">
+                <h3>Pay Installment</h3>
+                <div class="payment-amount">
+                    Amount: <strong>Rs. {{ currentInstallment.amount | number:'1.2-2' }}</strong>
+                </div>
+
+                <div class="form-group mt-3">
+                    <label class="form-label">Payment Type</label>
+                    <select class="form-control custom-select" [(ngModel)]="paymentType">
+                        <option value="CASH">CASH</option>
+                        <option value="ONLINE">ONLINE</option>
+                    </select>
+                </div>
+
+                <div *ngIf="paymentType === 'ONLINE'" class="form-group mt-3">
+                    <label class="form-label">Reference ID <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" [(ngModel)]="refId" placeholder="Enter online transfer ID">
+                </div>
+
+                <div class="modal-actions mt-4">
+                    <button class="btn btn-secondary flex-1" (click)="showPayModal = false">Cancel</button>
+                    <button class="btn btn-primary flex-1" [disabled]="paymentType === 'ONLINE' && !refId"
+                        (click)="processPayment()">Confirm</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hidden Receipt Template for Printing -->
+        <div id="thermal-receipt" class="d-none">
+            <div class="receipt-wrapper">
+                <div class="receipt-header">
+                    <h2>giftokarachi.com</h2>
+                    <p>PAYMENT RECEIPT</p>
+                </div>
+                <div class="receipt-info">
+                    <p><strong>Customer:</strong> {{ selectedPlan?.sale?.customer?.name }}</p>
+                    <p><strong>Date:</strong> {{ currentReceipt?.date | date:'medium' }}</p>
+                    <p><strong>Plan ID:</strong> {{ selectedPlan?.id }}</p>
+                    <p><strong>Installment #:</strong> {{ currentReceipt?.instId }}</p>
+                </div>
+                <table class="receipt-table">
+                    <tr>
+                        <td class="py-1"><strong>Paid Amount:</strong></td>
+                        <td class="py-1 text-right"><strong>Rs. {{ currentReceipt?.amount }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="py-1">Payment Type:</td>
+                        <td class="py-1 text-right">{{ currentReceipt?.type }}</td>
+                    </tr>
+                    <tr *ngIf="currentReceipt?.refId">
+                        <td class="py-1">Ref ID:</td>
+                        <td class="py-1 text-right">{{ currentReceipt?.refId }}</td>
+                    </tr>
+                </table>
+                <div class="receipt-balance">
+                    <p><strong>Remaining Balance:</strong> Rs. {{ currentReceipt?.remaining }}</p>
+                </div>
+                <div class="receipt-footer">
+                    <p>Thank you for your payment!</p>
+                    <p class="receipt-time">{{ currentReceipt?.date | date:'yyyy-MM-dd HH:mm:ss' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

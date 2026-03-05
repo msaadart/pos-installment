@@ -1,0 +1,270 @@
+<div class="page-container">
+    <div class="content-wrapper">
+        <div class="page-header">
+            <h2>Purchases</h2>
+            <div class="header-actions">
+                <button class="btn btn-secondary" (click)="showSupplierForm = !showSupplierForm">
+                    <span class="d-mobile-none">Add </span>Supplier
+                </button>
+                <button class="btn btn-primary" (click)="toggleForm()">
+                    <span class="icon">{{ showForm ? '&times;' : '+' }}</span> <span class="d-mobile-none">New
+                        Purchase</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Supplier Form -->
+        <div *ngIf="showSupplierForm" class="card form-card mb-4 border-secondary">
+            <h3>New Supplier</h3>
+            <div class="responsive-inline-form">
+                <div class="form-group">
+                    <input type="text" class="form-control" [(ngModel)]="newSupplier.name" placeholder="Supplier Name">
+                </div>
+                <div class="form-group">
+                    <input type="text" class="form-control" [(ngModel)]="newSupplier.phone" placeholder="Phone">
+                </div>
+                <div class="form-group">
+                    <input type="text" class="form-control" [(ngModel)]="newSupplier.company" placeholder="Company">
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-secondary w-100" (click)="addSupplier()">Save</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Purchase Form -->
+        <div *ngIf="showForm" class="card form-card mb-4 border-primary">
+            <h3>New Purchase</h3>
+            <form [formGroup]="purchaseForm" (ngSubmit)="onSubmit()" class="responsive-form">
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label class="form-label">Supplier</label>
+                        <select class="form-control custom-select" formControlName="supplierId"
+                            [class.is-invalid]="purchaseForm.get('supplierId')?.invalid && purchaseForm.get('supplierId')?.touched">
+                            <option *ngFor="let s of suppliers" [value]="s.id">{{ s.name }} (Bal: Rs. {{s.balance}})
+                            </option>
+                        </select>
+                        <div class="invalid-feedback"
+                            *ngIf="purchaseForm.get('supplierId')?.invalid && purchaseForm.get('supplierId')?.touched">
+                            Supplier is required
+                        </div>
+                    </div>
+
+                    <div class="form-group col-md-6">
+                        <label class="form-label">Shop (Destination)</label>
+                        <select class="form-control custom-select" formControlName="shopId"
+                            [class.is-invalid]="purchaseForm.get('shopId')?.invalid && purchaseForm.get('shopId')?.touched">
+                            <option *ngFor="let shop of shops" [value]="shop.id">{{ shop.name }}</option>
+                        </select>
+                        <div class="invalid-feedback"
+                            *ngIf="purchaseForm.get('shopId')?.invalid && purchaseForm.get('shopId')?.touched">
+                            Shop is required
+                        </div>
+                    </div>
+                </div>
+
+                <h4 class="mt-2 mb-3 section-title">Items</h4>
+                <div class="responsive-item-adder mb-3">
+                    <div class="item-select">
+                        <select class="form-control custom-select" [(ngModel)]="currentItem.productId"
+                            [ngModelOptions]="{standalone: true}">
+                            <option [ngValue]="null">Select Product</option>
+                            <option *ngFor="let p of products" [value]="p.id">{{ p.name }} (Stock: {{p.stock}})</option>
+                        </select>
+                    </div>
+                    <div class="item-qty">
+                        <input type="number" class="form-control" [(ngModel)]="currentItem.quantity"
+                            [ngModelOptions]="{standalone: true}" placeholder="Qty">
+                    </div>
+                    <div class="item-cost">
+                        <input type="number" class="form-control" [(ngModel)]="currentItem.costPrice"
+                            [ngModelOptions]="{standalone: true}" placeholder="Cost">
+                    </div>
+                    <div class="item-action">
+                        <button type="button" class="btn btn-secondary w-100" (click)="addItem()">Add</button>
+                    </div>
+                </div>
+
+                <div class="table-responsive mb-4" *ngIf="purchaseItems.length > 0">
+                    <table class="data-table compact-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Qty</th>
+                                <th>Cost</th>
+                                <th>Subtotal</th>
+                                <th width="50"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let item of purchaseItems; let i = index">
+                                <td data-label="Product">{{ getProductName(item.productId) }}</td>
+                                <td data-label="Qty">{{ item.quantity }}</td>
+                                <td data-label="Cost">Rs. {{ item.costPrice | number:'1.2-2' }}</td>
+                                <td data-label="Subtotal" class="font-weight-bold">Rs. {{ (item.quantity *
+                                    item.costPrice) | number:'1.2-2' }}</td>
+                                <td data-label="Action" class="text-right">
+                                    <button type="button" class="btn-icon text-danger"
+                                        (click)="removeItem(i)">&times;</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="summary-box mb-4">
+                    <div class="form-row">
+                        <div class="form-group col-md-6 mb-0">
+                            <label class="form-label">Total Amount</label>
+                            <input type="number" class="form-control font-weight-bold" [value]="calculateTotal()"
+                                readonly>
+                        </div>
+                        <div class="form-group col-md-6 mb-0">
+                            <label class="form-label">Paid Amount</label>
+                            <input type="number" class="form-control" formControlName="paidAmount">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary btn-lg"
+                        [disabled]="purchaseForm.invalid || purchaseItems.length === 0">Create Purchase</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Purchase List -->
+        <div class="card mb-4">
+            <div class="search-bar">
+                <input type="text" class="form-control search-input" [(ngModel)]="searchTerm"
+                    placeholder="Search purchases by invoice or supplier..." (keyup.enter)="onSearch()">
+                <button class="btn btn-primary" (click)="onSearch()">Search</button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Invoice #</th>
+                            <th>Supplier</th>
+                            <th>Phone</th>
+                            <th>Total</th>
+                            <th>Paid</th>
+                            <th>Balance</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let p of purchases">
+                            <td data-label="Invoice #">{{ p.invoiceNo }}</td>
+                            <td data-label="Supplier">
+                                {{ p.supplier?.name }}
+                                <span class="d-block small text-muted">{{ p.supplier?.company }}</span>
+                            </td>
+                            <td data-label="Phone">{{ p.supplier?.phone }}</td>
+                            <td data-label="Total" class="font-weight-bold">Rs. {{ p.totalAmount | number:'1.2-2' }}
+                            </td>
+                            <td data-label="Paid" class="text-success">Rs. {{ p.paidAmount | number:'1.2-2' }}</td>
+                            <td data-label="Balance" class="text-danger">Rs. {{ p.balance | number:'1.2-2' }}</td>
+                            <td data-label="Date">{{ p.createdAt | date:'short' }}</td>
+                        </tr>
+                        <tr *ngIf="purchases.length === 0">
+                            <td colspan="7" class="text-center py-4 text-muted">No purchases found.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Clear Balance Section -->
+        <div class="card mb-4 border-warning">
+            <div class="card-header">
+                <h3>Clear Remaining Amount</h3>
+            </div>
+            <div class="responsive-form">
+                <div class="form-row align-items-end">
+                    <div class="form-group col-md-4">
+                        <label class="form-label">Select Supplier</label>
+                        <select class="form-control custom-select" [(ngModel)]="clearBalSupplierId"
+                            (change)="onClearBalSupplierChange()">
+                            <option [ngValue]="null">Select...</option>
+                            <option *ngFor="let s of suppliers" [value]="s.id">{{ s.name }} (Bal: Rs. {{s.balance}})
+                            </option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label class="form-label">Select Purchase</label>
+                        <select class="form-control custom-select" [(ngModel)]="clearBalPurchaseId">
+                            <option [ngValue]="null">Select...</option>
+                            <option *ngFor="let p of filteredPurchasesForClearBal" [value]="p.id">Inv: {{ p.invoiceNo }}
+                                (Bal: Rs. {{p.balance}})</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label class="form-label">Clear Amount</label>
+                        <input type="number" class="form-control" [(ngModel)]="clearBalAmount">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label class="form-label">Payment Type</label>
+                        <select class="form-control custom-select" [(ngModel)]="method">
+                            <option value="CASH">CASH</option>
+                            <option value="ONLINE">ONLINE</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-8">
+                        <label class="form-label">Notes</label>
+                        <input type="text" class="form-control" [(ngModel)]="notes" placeholder="Payment notes...">
+                    </div>
+                </div>
+
+                <div class="form-actions mt-2">
+                    <button class="btn btn-primary" (click)="submitClearPurchaseBalance()">Submit Payment</button>
+                    <button type="button" class="btn btn-secondary" (click)="searchPayments()">Search Payment</button>
+                    <button type="button" class="btn btn-tertiary" (click)="loadPurchasePayments()">Clear</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment History Table -->
+        <div class="card">
+            <div class="page-header mb-3">
+                <h3 class="m-0">Payment Clearing History</h3>
+                <button class="btn btn-secondary btn-sm" (click)="printHistory()">
+                    <span class="icon">&#128424;</span> Print
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <table id="payment-history-table" class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Supplier</th>
+                            <th>Invoice #</th>
+                            <th>Amount</th>
+                            <th>Method</th>
+                            <th>Date</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let pay of purchasePayments">
+                            <td data-label="Supplier">{{ pay.supplier?.name }}</td>
+                            <td data-label="Invoice #">{{ pay.purchase?.invoiceNo || '-' }}</td>
+                            <td data-label="Amount" class="font-weight-bold text-success">Rs. {{ pay.amount |
+                                number:'1.2-2' }}</td>
+                            <td data-label="Method"><span class="badge badge-secondary">{{ pay.method }}</span></td>
+                            <td data-label="Date">{{ pay.paymentDate | date:'short' }}</td>
+                            <td data-label="Notes" class="text-truncate" style="max-width: 200px;" [title]="pay.notes">
+                                {{ pay.notes }}</td>
+                        </tr>
+                        <tr *ngIf="purchasePayments.length === 0">
+                            <td colspan="6" class="text-center py-4 text-muted">No payment history found.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

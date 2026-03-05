@@ -1,0 +1,113 @@
+<div class="page-container">
+    <div class="content-wrapper">
+        <div class="page-header">
+            <h2>Expense Management</h2>
+
+            <div class="header-actions">
+                <div *ngIf="user?.role === 'SUPER_ADMIN'" class="shop-filter text-muted">
+                    Viewing expenses for:
+                    <span *ngFor="let shop of shops" class="shop-name">
+                        @if(shop.id === authService.getSelectedShopId()) {
+                        {{ shop.name }}
+                        }
+                    </span>
+                </div>
+                <button class="btn btn-primary" (click)="toggleForm()">
+                    <span class="icon">{{ showForm ? '&times;' : '+' }}</span> New Expense
+                </button>
+            </div>
+        </div>
+
+        <!-- Add Expense Form -->
+        <div *ngIf="showForm" class="card form-card mb-4 border-primary">
+            <h3>New Expense</h3>
+            <form [formGroup]="expenseForm" (ngSubmit)="onSubmit()" class="responsive-form">
+                <div class="form-group full-width">
+                    <label class="form-label">Description</label>
+                    <input type="text" class="form-control" formControlName="description">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label class="form-label">Amount</label>
+                        <input type="number" class="form-control" formControlName="amount">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label class="form-label">Category</label>
+                        <input type="text" class="form-control" formControlName="category"
+                            placeholder="e.g. Rent, Utilities">
+                    </div>
+                </div>
+
+                <div class="form-group full-width">
+                    <label class="form-label">Shop</label>
+                    <select class="form-control custom-select" formControlName="shopId">
+                        <option *ngFor="let shop of shops" [value]="shop.id">{{ shop.name }}</option>
+                    </select>
+                </div>
+
+                <div class="form-actions mt-3">
+                    <button type="submit" class="btn btn-primary" [disabled]="expenseForm.invalid">Create
+                        Expense</button>
+                    <button type="button" class="btn btn-secondary" (click)="toggleForm()">Cancel</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Expense List -->
+        <div class="card">
+            <div class="search-bar">
+                <div class="form-group search-input-group">
+                    <input type="text" class="form-control" [(ngModel)]="searchTerm"
+                        placeholder="Search by description or category..." (keyup.enter)="onSearch()">
+                </div>
+                <div class="form-group date-group">
+                    <input type="date" class="form-control" [(ngModel)]="startDate" title="Start Date">
+                </div>
+                <div class="form-group date-group">
+                    <input type="date" class="form-control" [(ngModel)]="endDate" title="End Date">
+                </div>
+                <div class="search-actions">
+                    <button class="btn btn-primary" (click)="onSearch()">Search</button>
+                    <button class="btn btn-secondary" (click)="clearForm()">Clear</button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Category</th>
+                            <th>Amount</th>
+                            <th>Shop</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let e of expenses">
+                            <td data-label="Date">{{ e.date | date:'shortDate' }}</td>
+                            <td data-label="Description">{{ e.description }}</td>
+                            <td data-label="Category"><span class="badge badge-secondary">{{ e.category }}</span></td>
+                            <td data-label="Amount" class="font-weight-bold text-danger">Rs. {{ e.amount |
+                                number:'1.2-2' }}</td>
+                            <td data-label="Shop">{{ e.shop?.name }}</td>
+                            <td data-label="Actions" class="action-buttons">
+                                @if(user?.role === 'SUPER_ADMIN' || user?.role === 'SHOP_ADMIN'){
+                                <button class="btn btn-danger btn-sm" (click)="deleteExpense(e.id)">Deactivate</button>
+                                } @else {
+                                <span>-</span>
+                                }
+                            </td>
+                        </tr>
+                        <tr *ngIf="expenses.length === 0">
+                            <td colspan="6" class="text-center py-4 text-muted">No expenses found for the selected
+                                criteria.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
