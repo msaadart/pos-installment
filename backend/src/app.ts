@@ -43,9 +43,19 @@ app.use(helmet({
           "'unsafe-inline'"   // allow inline JS
         ],
 
+        scriptSrcAttr: [
+          "'unsafe-inline'"   // ✅ allow onclick, onload etc
+        ],
+
         styleSrc: [
           "'self'",
           "'unsafe-inline'"   // allow inline CSS
+        ],
+
+         imgSrc: [
+          "'self'",
+          "data:",
+          "blob:"
         ],
 
         objectSrc: ["'none'"],

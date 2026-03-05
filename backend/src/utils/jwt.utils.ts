@@ -3,7 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 
 const SECRET_KEY = process.env.JWT_SECRET || 'supersecretkey';
 
-export const generateToken = (payload: any, expiresIn: string | number = '1d') => {
+export const generateToken = (payload: any, expiresIn: string | number = '8h') => {
     return jwt.sign(payload, SECRET_KEY, { expiresIn } as SignOptions);
 };
 
