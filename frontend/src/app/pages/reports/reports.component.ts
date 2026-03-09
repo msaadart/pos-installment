@@ -63,7 +63,8 @@ export class ReportsComponent implements OnInit {
     }
 
     downloadPDF() {
-        // High-quality print approach which user can save as PDF
-        window.print();
+       setTimeout(() => {
+            window.print();
+        }, 300);
     }
 }

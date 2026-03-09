@@ -52,6 +52,7 @@
                             <th>Invoice</th>
                             <th>Date</th>
                             <th>Amount</th>
+                            <th>Sale Type</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -59,6 +60,7 @@
                             <td>{{ sale.invoiceNo }}</td>
                             <td>{{ sale.createdAt | date:'shortDate' }}</td>
                             <td class="font-weight-bold">Rs. {{ sale.totalAmount | number:'1.2-2' }}</td>
+                            <td>{{ sale.saleType }}</td>
                         </tr>
                         <tr *ngIf="stats.recentSales.length === 0">
                             <td colspan="3" class="text-center py-3">No recent sales found.</td>

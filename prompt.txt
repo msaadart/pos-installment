@@ -1,0 +1,77 @@
+add customer frontend missing from add and table to search and edit customer.
+
+my all delete option convert to inactive i don't want completed deleted my application
+
+installment plan page view Receipt should be print in browser on receipt data show in print
+
+my installment add filter which is i filter through phone and cnic.
+
+purchased screen add supplier it's not working 
+
+my reports i need to make pdf report download after filter - installment due i want filter selective customer through phone and cnic number. customer summary also want filter and download pdf
+
+expense module 
+show expense depend on my shop. 
+no deleted option add inactive if i deleted that record is inactive.
+
+purchase module
+i wanted create from clear remaining amount of supplier (supplier and select purchase add field clear amount balance again store)
+show only my shopid purchase.  
+
+installmentplan module
+add shopid and get data depend on shopid
+
+dashboard
+add expense box after active installments
+/reports/dashboard this api add row limit 200. on frontend add pagination add date rage(stat and end) filter.
+
+pos(sale)
+on checkout update each item amount price is editable. customer select menu should be change to Autoselect a Single choice field option. 
+
+Installment Plans
+/installments this api add row limit 200. on frontend add pagination
+
+Customer Management
+/customers this api add row limit 200. on frontend add pagination and this search field add api to find records on database.
+
+Product Management
+/products this api add row limit 200. on frontend add pagination and this search field add api to find records on database.
+add edit product.
+
+purchase management 
+purchase table /purchases this api add row limit 200 and frontend add pagination and this search field add api to find records on database.
+Clear Remaining Amount 
+i can select supplier select purchase and put how much amount clear is it working as expected. 
+i need one more table  for save the record each entry payment clear and add how give payment via cash - online give reference id.
+select supplier and select purchase and show all entry in table and give print option.
+
+Expense Management
+/expenses this api add row limit 200. on frontend add pagination add date rage(stat and end) filter.
+
+
+add indexing in table for best performance you can do yourself  
+
+check database for do it improve the performance add indexing 
+
+
+---
+repots
+when i click download pdf all data isn't coming. set the pdf ui it's not coming properly.
+
+
+---
+
+
+   email: 'test@example.com',
+                password: 'password123'
+
+  email: 'shopadmin@example.com',
+                password: 'password123',
+                name: 'Shop Admin',
+
+
+
+
+
+
+

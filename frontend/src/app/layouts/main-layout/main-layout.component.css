@@ -55,7 +55,7 @@
 
 .sidebar {
   width: 260px;
-  background: var(--primary, #1e293b);
+  /* background: var(--primary, #1e293b); */
   display: flex;
   flex-direction: column;
   transition: transform 0.3s ease;
