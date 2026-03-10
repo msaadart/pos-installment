@@ -214,7 +214,7 @@ export const getCustomerInstallmentSummary = async (filters: any = {}) => {
     const { phone, cnic, shopId } = filters;
 
     let query = `
-        SELECT c.id, c.name,
+        SELECT c.id, c.name, c.cnic, c.phone, c.address,
                ip.id as planId,
                i.amount, i.paidAmount, i.status, i.dueDate
         FROM customer c
@@ -244,6 +244,9 @@ export const getCustomerInstallmentSummary = async (filters: any = {}) => {
     rows.forEach((r: any) => {
         if (!customersMap.has(r.id)) {
             customersMap.set(r.id, {
+                cnic: r.cnic,
+                phone: r.phone,
+                address: r.address,
                 name: r.name,
                 totalItems: new Set(),
                 totalPaid: 0,
@@ -269,6 +272,9 @@ export const getCustomerInstallmentSummary = async (filters: any = {}) => {
     const result: any[] = [];
     customersMap.forEach((val) => {
         result.push({
+            cnic: val.cnic,
+            phone: val.phone,
+            address: val.address,
             name: val.name,
             totalItems: val.totalItems.size,
             totalPaid: val.totalPaid,

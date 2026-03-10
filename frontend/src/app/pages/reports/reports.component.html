@@ -31,6 +31,7 @@
 
         <div class="reports-content">
             <!-- Sales Report -->
+            
             <div *ngIf="activeTab === 'sales'" class="card report-card">
                 <h3 class="print-visible">Sales Report</h3>
                 <div class="report-filters d-print-none pb-3 mb-3 border-bottom">
@@ -46,7 +47,7 @@
                     </div>
                     
                 <div class="table-responsive">
-                    <table class="data-table">
+                    <table id="{{activeTab}}" class="data-table">
                         <thead>
                             <tr>
                                 <th>Invoice</th>
@@ -79,10 +80,11 @@
             </div>
 
             <!-- Low Stock Report -->
+             
             <div *ngIf="activeTab === 'stock'" class="card report-card">
                 <h3 class="print-visible">Low Stock Report</h3>
                 <div class="table-responsive">
-                    <table class="data-table">
+                    <table id="{{activeTab}}" class="data-table">
                         <thead>
                             <tr>
                                 <th>Product</th>
@@ -108,10 +110,11 @@
             </div>
 
             <!-- Installments Due -->
+             
             <div *ngIf="activeTab === 'due'" class="card report-card">
                 <h3 class="print-visible">Installments Due / Overdue</h3>
                 <div class="table-responsive">
-                    <table class="data-table">
+                    <table id="{{activeTab}}" class="data-table">
                         <thead>
                             <tr>
                                 <th>Customer</th>
@@ -146,13 +149,14 @@
             </div>
 
             <!-- Customer Summary -->
-            <div *ngIf="activeTab === 'summary'" class="card report-card">
-                <h3 class="print-visible">Customer Installment Summary</h3>
+             
+            <div  *ngIf="activeTab === 'summary'" class="card report-card">
                 <div class="table-responsive">
-                    <table class="data-table">
+                    <table id="{{activeTab}}" class="data-table">
                         <thead>
                             <tr>
                                 <th>Customer</th>
+                                <th>Phone</th>
                                 <th>Active Plans</th>
                                 <th>Paid So Far</th>
                                 <th>Remaining</th>
@@ -161,7 +165,14 @@
                         </thead>
                         <tbody>
                             <tr *ngFor="let item of customerSummary">
-                                <td data-label="Customer" class="font-weight-bold">{{ item.name }}</td>
+                                <td data-label="Customer">
+                                    {{ item.name }}
+                                    <span class="d-block small text-muted">CNIC: {{ item.cnic }} </span>
+                                </td>
+                                <td data-label="Phone">
+                                    {{ item.phone }}
+                                    <span class="d-block small text-muted">Address: {{ item.address }} </span>
+                                </td>
                                 <td data-label="Active Plans">
                                     <span class="badge badge-secondary">{{ item.totalItems }}</span>
                                 </td>

@@ -120,8 +120,12 @@ export class ProductsComponent implements OnInit {
             shopId: this.user?.role !== 'SUPER_ADMIN' ? this.user.shopId : Number(this.productForm.value.shopId),
             categoryId: this.productForm.value.categoryId ? Number(this.productForm.value.categoryId) : null,
             brandId: this.productForm.value.brandId ? Number(this.productForm.value.brandId) : null,
-            image: this.selectedFileBase64
-        };
+            image: this.selectedFileBase64 ?? null
+         };
+
+        if(this.selectedFileBase64 === null && this.isEditing) {
+            delete productData.image; // Don't send image field if not changed during edit
+        }
 
         if (this.isEditing && this.editingProductId) {
             this.productService.updateProduct(this.editingProductId, productData).subscribe(() => {

@@ -146,26 +146,30 @@
                     <thead>
                         <tr>
                             <th>Invoice #</th>
-                            <th>Supplier</th>
-                            <th>Phone</th>
+                            <th>Supplier</th>    
                             <th>Total</th>
                             <th>Paid</th>
                             <th>Balance</th>
+                            <th>Cost</th>
                             <th>Date</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr *ngFor="let p of purchases">
-                            <td data-label="Invoice #">{{ p.invoiceNo }}</td>
+                            <td data-label="Invoice #">{{ p.invoiceNo }}  
+                                <span class="d-block small text-muted">{{ p.productName }}</span>
+                            </td>
                             <td data-label="Supplier">
                                 {{ p.supplier?.name }}
-                                <span class="d-block small text-muted">{{ p.supplier?.company }}</span>
+                                <span class="d-block small text-muted">{{ p.supplier?.company }} {{ p.supplier?.phone }}</span>
                             </td>
-                            <td data-label="Phone">{{ p.supplier?.phone }}</td>
                             <td data-label="Total" class="font-weight-bold">Rs. {{ p.totalAmount | number:'1.2-2' }}
                             </td>
                             <td data-label="Paid" class="text-success">Rs. {{ p.paidAmount | number:'1.2-2' }}</td>
                             <td data-label="Balance" class="text-danger">Rs. {{ p.balance | number:'1.2-2' }}</td>
+                            <td data-label="Cost / Qty" class="text-muted">{{ p.itemCostPrice | number:'1.2-2' }} 
+                                 <span class="d-block small text-muted">Qty: {{ p.itemQuantity }}</span>
+                            </td>
                             <td data-label="Date">{{ p.createdAt | date:'short' }}</td>
                         </tr>
                         <tr *ngIf="purchases.length === 0">

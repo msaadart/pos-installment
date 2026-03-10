@@ -239,6 +239,20 @@ textarea.form-control {
     font-weight: 600;
 }
 
+.d-block {
+    display: block;
+}
+
+.small {
+    font-size: 0.8rem;
+}
+
+.text-truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 @media (min-width: 576px) {
     .col-sm-6 {
         flex: 0 0 50%;

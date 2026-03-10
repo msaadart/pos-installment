@@ -56,10 +56,12 @@ export const createPurchase = async (data: any) => {
 export const getAllPurchases = async (filters: any = {}) => {
     const { search, shopId, supplierId } = filters;
     let query = `
-        SELECT p.*, s.name as supplierName, s.company as supplierCompany, s.phone as supplierPhone, sh.name as shopName 
+        SELECT p.*, pr.name as productName, pi.quantity as itemQuantity, pi.costPrice as itemCostPrice, s.name as supplierName, s.company as supplierCompany, s.phone as supplierPhone, sh.name as shopName 
         FROM purchase p
         LEFT JOIN supplier s ON p.supplierId = s.id
         LEFT JOIN shop sh ON p.shopId = sh.id
+        LEFT JOIN purchaseitem pi ON p.id = pi.purchaseId
+        LEFT JOIN product pr ON pi.productId = pr.id
         WHERE 1=1
     `;
     const params: any[] = [];

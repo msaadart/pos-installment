@@ -63,8 +63,43 @@ export class ReportsComponent implements OnInit {
     }
 
     downloadPDF() {
-       setTimeout(() => {
-            window.print();
-        }, 300);
+  
+        const content = document.getElementById(this.activeTab);
+        if (!content) return;
+
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+
+            printWindow.document.write(`
+            <html>
+                <head>
+                    <title>${this.activeTab} Report</title>
+                    <style>
+                         @page { size: 80mm auto; margin: 0; }
+                              body { font-family: Arial, sans-serif; padding: 20px; }
+                            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                            th { text-align: left; border-bottom: 2px solid #333; padding-bottom: 10px; }
+                        th, td { background-color: #fff; font-size: 14px; }
+                        h2 { text-align: center; text-transform: uppercase; }
+                    </style>
+                </head>
+                <body>
+                    <h2>${this.activeTab} Report</h2>
+                    ${content.outerHTML}
+                </body>
+            </html>
+            <script>
+                window.onload = function () {
+                    window.print();
+                };
+
+                window.onafterprint = function () {
+                    window.close();
+                };
+            <\/script>
+        `);
+            printWindow.document.close();
+        }
+    
     }
 }

@@ -305,13 +305,35 @@
     }
 }
 
+.d-block {
+    display: block;
+}
+
+.small {
+    font-size: 0.8rem;
+}
+
+.text-truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 /* Print Styles */
 @media print {
-    .d-print-none {
-        display: none !important;
+
+    @page {
+        size: A4;
+        margin: 10mm;
     }
 
-    .tabs-container {
+
+    .d-print-none,
+    .tabs-container,
+    .page-header,
+    .tab-actions,
+    .report-filters,
+    .btn {
         display: none !important;
     }
 
@@ -322,44 +344,61 @@
         margin: 0 !important;
         border: none !important;
         box-shadow: none !important;
-        background: white !important;
+        background: #fff !important;
+        width: 100% !important;
     }
 
     h3.print-visible {
         display: block !important;
         text-align: center;
-        margin-bottom: 1.5rem !important;
-        font-size: 1.5rem;
+        margin-bottom: 20px;
+        font-size: 18px;
         border-bottom: 2px solid #ccc;
-        padding-bottom: 0.5rem;
+        padding-bottom: 8px;
     }
+
+    /* TABLE RESET */
+    /* .table-responsive {
+        overflow: visible !important;
+    } */
 
     table.data-table {
-        border-collapse: collapse !important;
         width: 100% !important;
-    }
-
-    table.data-table th,
-    table.data-table td {
-        border: 1px solid #ccc !important;
-        padding: 0.5rem !important;
-        font-size: 10pt !important;
-        display: table-cell !important;
-        text-align: left !important;
+        border-collapse: collapse !important;
+        table-layout: fixed !important;
+        page-break-inside: auto;
+        border-collapse: collapse;
     }
 
     .data-table thead {
         display: table-header-group !important;
     }
 
-    .data-table tr {
-        display: table-row !important;
-        border: none !important;
-        margin: 0 !important;
+    .data-table tbody {
+        display: table-row-group !important;
     }
 
-    table.data-table td::before {
+    .data-table tr {
+        display: table-row !important;
+        page-break-inside: avoid;
+        page-break-after: auto;
+    }
+
+    .data-table th,
+    .data-table td {
+        display: table-cell !important;
+        border: 1px solid #ccc !important;
+        padding: 2px 5px !important;
+        font-size: 10px !important;
+        text-align: left !important;
+        width: auto !important;
+        /* white-space: normal !important; */
+    }
+
+    /* remove mobile label */
+    .data-table td::before {
         display: none !important;
+        content: none !important;
     }
 
     .badge {
@@ -368,14 +407,33 @@
         background: transparent !important;
     }
 
+    /* hide angular layout */
     ::ng-deep .sidebar,
+    ::ng-deep .mobile-header,
     ::ng-deep .topbar {
         display: none !important;
     }
 
-    @page {
-        size: A4;
-        margin: 10mm;
+    .page-break {
+        page-break-before: always;
+        break-before: page;
     }
+
+    .data-table thead {
+        display: table-header-group;
+    }
+
+    .data-table tr {
+        page-break-inside: avoid;
+    }
+
+    .small {
+        font-size: 8px !important;
+    }
+
+    .data-table tr {
+        display: block;
+    }
+
 
 }

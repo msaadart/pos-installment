@@ -54,24 +54,26 @@
                         <label class="form-label">Price</label>
                         <input type="number" class="form-control" formControlName="price">
                     </div>
-                    <div class="form-group col-sm-6">
-                        <label class="form-label">Cost Price</label>
-                        <input type="number" class="form-control" formControlName="costPrice">
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group col-sm-6">
-                        <label class="form-label">Stock</label>
-                        <input type="number" class="form-control" formControlName="stock">
-                    </div>
-                    <div class="form-group col-sm-6">
+                     <div class="form-group col-sm-6">
                         <label class="form-label">Shop</label>
                         <select class="form-control custom-select" formControlName="shopId">
                             <option *ngFor="let shop of shops" [value]="shop.id">{{ shop.name }}</option>
                         </select>
                     </div>
+                    
                 </div>
+
+                <!-- <div class="form-row">
+                    <div class="form-group col-sm-6">
+                        <label class="form-label">Cost Price</label>
+                        <input type="number" class="form-control" formControlName="costPrice">
+                    </div>
+                    <div class="form-group col-sm-6">
+                        <label class="form-label">Stock</label>
+                        <input type="number" class="form-control" formControlName="stock" >
+                    </div>
+                   
+                </div> -->
 
                 <div class="form-row">
                     <div class="form-group col-md-6">
@@ -148,7 +150,9 @@
                                 </div>
                             </td>
                             <td data-label="Name" class="font-weight-bold">{{ product.name }}</td>
-                            <td data-label="SKU">{{ product.sku }}</td>
+                            <td data-label="SKU">{{ product.sku }}
+                                <span class="d-block small text-muted">Barcode: {{ product.barcode }}</span>
+                            </td>
                             <td data-label="Price" class="text-primary font-weight-bold">Rs. {{ product.price |
                                 number:'1.2-2' }}</td>
                             <td data-label="Stock">
