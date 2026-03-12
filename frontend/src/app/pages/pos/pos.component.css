@@ -33,6 +33,33 @@ h2 {
     transition: border-color 0.2s;
 }
 
+.autocomplete-wrapper {
+    position: relative;
+}
+
+.autocomplete-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 220px;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+    z-index: 10;
+}
+
+.autocomplete-item {
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+}
+
+.autocomplete-item:hover {
+    background: #f1f5f9;
+}
+
 .custom-select {
     appearance: none;
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
@@ -262,6 +289,9 @@ h2 {
     padding: 0.8rem;
     font-size: 1rem;
     font-weight: 600;
+}
+.btn-block{
+    width: 100%;
 }
 
 /* Mobile Responsiveness */

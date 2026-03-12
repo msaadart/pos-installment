@@ -88,13 +88,14 @@
                 <div class="details-col">
                     <p><strong>Customer:</strong> {{ selectedPlan.sale.customer?.name }} </p>
                     <p><strong>Phone:</strong> {{ selectedPlan.sale.customer?.phone }}</p>
-                    <p><strong>Monthly Installment:</strong> <span class="text-primary font-weight-bold">Rs. {{
+                    <p><strong>Address:</strong> {{ selectedPlan.sale.customer?.address }}</p>
+                    <p><strong>Monthly Installment:</strong> <span class="text-primary font-weight-bold"> Rs. {{
                             selectedPlan.monthlyInstallment | number:'1.2-2' }}</span></p>
                 </div>
                 <div class="details-col">
                     <p><strong>Total Amount:</strong> Rs. {{ selectedPlan.totalAmount | number:'1.2-2' }}</p>
                     <p><strong>Down Payment:</strong> Rs. {{ selectedPlan.downPayment | number:'1.2-2' }}</p>
-                    <p><strong>Remaining Balance:</strong> <span class="text-danger font-weight-bold">Rs. {{
+                    <p><strong>Remaining Balance:</strong> <span class="text-danger font-weight-bold"> Rs. {{
                             getRemaining(selectedPlan) | number:'1.2-2' }}</span></p>
                 </div>
             </div>

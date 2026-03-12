@@ -81,6 +81,7 @@ export class ReportsComponent implements OnInit {
                             th { text-align: left; border-bottom: 2px solid #333; padding-bottom: 10px; }
                         th, td { background-color: #fff; font-size: 14px; }
                         h2 { text-align: center; text-transform: uppercase; }
+                        span { font-size: 10px; }
                     </style>
                 </head>
                 <body>

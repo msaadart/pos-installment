@@ -57,7 +57,7 @@ export const getInstallmentPlans = async (filters: any = {}) => {
     let query = `
         SELECT ip.*, 
             s.invoiceNo as saleInvoiceNo,
-            c.name as customerName, c.phone as customerPhone, c.cnic as customerCnic
+            c.name as customerName, c.phone as customerPhone, c.cnic as customerCnic, c.address as customerAddress
         FROM installmentplan ip
         LEFT JOIN sale s ON ip.saleId = s.id
         LEFT JOIN customer c ON s.customerId = c.id
@@ -108,12 +108,12 @@ export const getInstallmentPlans = async (filters: any = {}) => {
         );
 
         return plans.map((plan: any) => {
-            const { saleInvoiceNo, customerName, customerPhone, customerCnic, ...planData } = plan;
+            const { saleInvoiceNo, customerName, customerPhone, customerCnic, customerAddress, ...planData } = plan;
             return {
                 ...planData,
                 sale: {
                     invoiceNo: saleInvoiceNo,
-                    customer: customerName ? { name: customerName, phone: customerPhone, cnic: customerCnic } : null
+                    customer: customerName ? { name: customerName, phone: customerPhone, cnic: customerCnic, address: customerAddress } : null
                 },
                 installments: installments.filter((i: any) => i.planId === plan.id)
             };

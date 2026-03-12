@@ -21,6 +21,7 @@ export class PosComponent implements OnInit {
     filteredProducts: any[] = [];
     customers: any[] = [];
     activeCustomers: any[] = [];
+    filteredCustomerOptions: any[] = [];
     cart: any[] = [];
     user: any = this.authService.getCurrentUser();
     submitted = false;
@@ -28,6 +29,8 @@ export class PosComponent implements OnInit {
 
     saleType: 'CASH' | 'INSTALLMENT' = 'CASH';
     selectedCustomerId: number | null = null;
+    customerSearch = '';
+    showCustomerList = false;
     downPayment: number = 0;
     duration: number = 6;
     apiUrl = environment.baseUrl;
@@ -58,14 +61,7 @@ export class PosComponent implements OnInit {
             this.products = data;
             this.filteredProducts = data;
         });
-        this.customerService.getAllCustomers().subscribe(data => {
-            this.customers = data;
-            this.activeCustomers = data.filter((c: any) => c.isActive);
-            if (this.activeCustomers.length === 1) {
-                this.selectedCustomerId = this.activeCustomers[0].id;
-                this.saleForm.patchValue({ customerId: this.activeCustomers[0].id });
-            }
-        });
+        this.customerSearchChange();
         this.shopService.getAllShops().subscribe(data => this.shops = data);
 
         if (this.user?.role !== 'SUPER_ADMIN') {
@@ -74,9 +70,55 @@ export class PosComponent implements OnInit {
         }
     }
 
+    customerSearchChange(cnic?: string) {
+        this.customerService.getAllCustomers({search:cnic?cnic:''}).subscribe(data => {
+            this.customers = data;
+            this.activeCustomers = data.filter((c: any) => c.isActive);
+            this.filteredCustomerOptions = this.activeCustomers;
+
+            if (this.activeCustomers.length === 1) {
+                const soleCustomer = this.activeCustomers[0];
+                this.selectedCustomerId = soleCustomer.id;
+                this.customerSearch = `${soleCustomer.name} (${soleCustomer.cnic})`;
+                this.saleForm.patchValue({ customerId: soleCustomer.id });
+            }
+        });
+    }
+
     filterProducts(event: any) {
         const query = event.target.value.toLowerCase();
         this.filteredProducts = this.products.filter(p => p.name.toLowerCase().includes(query) || (p.sku && p.sku.toLowerCase().includes(query)));
+    }
+
+    filterCustomers(query: string) {
+        const normalized = (query || '').toLowerCase().trim();
+        if (!normalized) {
+            this.filteredCustomerOptions = this.activeCustomers;
+            this.selectedCustomerId = null;
+            this.saleForm.patchValue({ customerId: null });
+            return;
+        }
+
+        this.filteredCustomerOptions = this.activeCustomers.filter(c =>
+            (c.name || '').toLowerCase().includes(normalized) ||
+            (c.cnic || '').toLowerCase().includes(normalized)
+        );
+
+        // Clear selection when typing
+        this.selectedCustomerId = null;
+        this.saleForm.patchValue({ customerId: null });
+    }
+
+    selectCustomer(customer: any) {
+        this.selectedCustomerId = customer.id;
+        this.customerSearch = `${customer.name} (${customer.cnic})`;
+        this.saleForm.patchValue({ customerId: customer.id });
+        this.showCustomerList = false;
+    }
+
+    hideCustomerList() {
+        // Delay hiding so clicks on list items still register
+        setTimeout(() => this.showCustomerList = false, 150);
     }
 
     addToCart(product: any) {

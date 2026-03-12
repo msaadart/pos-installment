@@ -165,13 +165,13 @@
                         </thead>
                         <tbody>
                             <tr *ngFor="let item of customerSummary">
-                                <td data-label="Customer">
-                                    {{ item.name }}
+                                <td data-label="Customer" width="15%">
+                                    {{ item.name }} <br>
                                     <span class="d-block small text-muted">CNIC: {{ item.cnic }} </span>
                                 </td>
-                                <td data-label="Phone">
-                                    {{ item.phone }}
-                                    <span class="d-block small text-muted">Address: {{ item.address }} </span>
+                                <td data-label="Phone" width="20%">
+                                    {{ item.phone }} <br>
+                                    <span class="d-block small text-muted">{{ item.address }} </span>
                                 </td>
                                 <td data-label="Active Plans">
                                     <span class="badge badge-secondary">{{ item.totalItems }}</span>
