@@ -185,6 +185,14 @@ body {
   overflow-x: hidden;
 }
 
+.d-block {
+    display: block;
+}
+
+.small {
+    font-size: 0.8rem;
+}
+
 /* Global Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

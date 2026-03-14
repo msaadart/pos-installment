@@ -76,15 +76,32 @@ export const getDashboardStats = async (filters: any = {}) => {
         ${userFilter.conditions}
     `;
 
+    // total received amount aggregate
+    const recAggFilter = buildFilters('sale');
+    const recAggQuery = `
+        SELECT SUM(balance) as total 
+        FROM sale 
+        ${recAggFilter.conditions}
+    `;
+
+    // purchase
+    const purchaseFilter = buildFilters('purchase');
+    const purchaseQuery = `
+        SELECT SUM(totalAmount) as total, SUM(paidAmount) as paid, SUM(balance) as balance
+        FROM purchase 
+        ${purchaseFilter.conditions}
+    `;
+
     // Shops (no filters)
     const shopQuery = `SELECT COUNT(*) as cnt FROM shop`;
 
     // Recent Sales (with alias!)
     const recentFilter = buildFilters('s');
     const recentSalesQuery = `
-        SELECT s.*, u.name as userName 
+        SELECT s.*, u.name as userName, c.name as customerName, c.phone as customerPhone, c.cnic as customerCnic 
         FROM sale s
         LEFT JOIN user u ON s.userId = u.id
+        LEFT JOIN customer c ON s.customerId = c.id
         ${recentFilter.conditions}
         ORDER BY s.createdAt DESC 
         LIMIT 200
@@ -98,7 +115,9 @@ export const getDashboardStats = async (filters: any = {}) => {
         [totalProducts],
         [totalUsers],
         [totalShops],
-        [recentSales]
+        [recentSales],
+        [totalRecivedAmountAggregate],
+        [purchaseAggregate]
     ]: any = await Promise.all([
         pool.query(plansQuery, plansFilter.params),
         pool.query(custQuery, custFilter.params),
@@ -107,7 +126,9 @@ export const getDashboardStats = async (filters: any = {}) => {
         pool.query(prodQuery, productFilter.params),
         pool.query(userQuery, userFilter.params),
         pool.query(shopQuery),
-        pool.query(recentSalesQuery, recentFilter.params)
+        pool.query(recentSalesQuery, recentFilter.params),
+        pool.query(recAggQuery, recAggFilter.params),
+        pool.query(purchaseQuery, purchaseFilter.params)
     ]);
 
     return {
@@ -118,9 +139,16 @@ export const getDashboardStats = async (filters: any = {}) => {
         activeInstallmentsCount: activeInstallments[0]?.cnt || 0,
         totalCustomers: totalCustomers[0]?.cnt || 0,
         totalExpenses: Number(totalExpensesAggregate[0]?.total) || 0,
+        totalRecivedAmount: Number(totalRecivedAmountAggregate[0]?.total) || 0,
+        purchase: purchaseAggregate.map((p: any) => ({
+            total: Number(p.total) || 0,
+            paid: Number(p.paid) || 0,
+            balance: Number(p.balance) || 0
+        }))[0],
         recentSales: recentSales.map((s: any) => ({
             ...s,
-            user: { name: s.userName }
+            user: { name: s.userName },
+            customer: { name: s.customerName, phone: s.customerPhone, cnic: s.customerCnic },
         }))
     };
 };

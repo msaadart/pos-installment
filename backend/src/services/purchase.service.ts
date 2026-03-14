@@ -216,7 +216,7 @@ export const clearPurchaseBalance = async (purchaseId: number, amount: number, m
 export const getAllPurchasePayments = async (filters: any = {}) => {
     const { supplierId, purchaseId, shopId } = filters;
     let query = `
-        SELECT pp.*, s.name as supplierName, p.invoiceNo as purchaseInvoiceNo
+        SELECT pp.*, s.name as supplierName, p.invoiceNo as purchaseInvoiceNo, s.phone as supplierPhone, s.company as supplierCompany
         FROM purchasepayment pp
         LEFT JOIN supplier s ON pp.supplierId = s.id
         LEFT JOIN purchase p ON pp.purchaseId = p.id
@@ -241,11 +241,11 @@ export const getAllPurchasePayments = async (filters: any = {}) => {
 
     const [rows]: any = await pool.query(query, params);
     return rows.map((row: any) => {
-        const { supplierName, purchaseInvoiceNo, ...paymentData } = row;
+        const { supplierName, purchaseInvoiceNo, supplierPhone, supplierCompany, ...paymentData } = row;
         return {
             ...paymentData,
-            supplier: { name: supplierName },
-            purchase: { invoiceNo: purchaseInvoiceNo }
+            supplier: { name: supplierName, phone: supplierPhone, company: supplierCompany },
+            purchase: { invoiceNo: purchaseInvoiceNo } 
         };
     });
 };

@@ -100,9 +100,9 @@
                             <tr *ngFor="let item of purchaseItems; let i = index">
                                 <td data-label="Product">{{ getProductName(item.productId) }}</td>
                                 <td data-label="Qty">{{ item.quantity }}</td>
-                                <td data-label="Cost">Rs. {{ item.costPrice | number:'1.2-2' }}</td>
+                                <td data-label="Cost">Rs. {{ item.costPrice | number:'1.0-0' }}</td>
                                 <td data-label="Subtotal" class="font-weight-bold">Rs. {{ (item.quantity *
-                                    item.costPrice) | number:'1.2-2' }}</td>
+                                    item.costPrice) | number:'1.0-0' }}</td>
                                 <td data-label="Action" class="text-right">
                                     <button type="button" class="btn-icon text-danger"
                                         (click)="removeItem(i)">&times;</button>
@@ -163,14 +163,14 @@
                                 {{ p.supplier?.name }}
                                 <span class="d-block small text-muted">{{ p.supplier?.company }} {{ p.supplier?.phone }}</span>
                             </td>
-                            <td data-label="Total" class="font-weight-bold">Rs. {{ p.totalAmount | number:'1.2-2' }}
+                            <td data-label="Total" class="font-weight-bold">Rs. {{ p.totalAmount | number:'1.0-0' }}
                             </td>
-                            <td data-label="Paid" class="text-success">Rs. {{ p.paidAmount | number:'1.2-2' }}</td>
-                            <td data-label="Balance" class="text-danger">Rs. {{ p.balance | number:'1.2-2' }}</td>
-                            <td data-label="Cost / Qty" class="text-muted">{{ p.itemCostPrice | number:'1.2-2' }} 
+                            <td data-label="Paid" class="text-success">Rs. {{ p.paidAmount | number:'1.0-0' }}</td>
+                            <td data-label="Balance" class="text-danger">Rs. {{ p.balance | number:'1.0-0' }}</td>
+                            <td data-label="Cost / Qty" class="text-muted">{{ p.itemCostPrice | number:'1.0-0' }} 
                                  <span class="d-block small text-muted">Qty: {{ p.itemQuantity }}</span>
                             </td>
-                            <td data-label="Date">{{ p.createdAt | date:'short' }}</td>
+                            <td data-label="Date">{{ p.createdAt | date:'short' }} {{ p.createdAt | date:'shortTime' }}</td>
                         </tr>
                         <tr *ngIf="purchases.length === 0">
                             <td colspan="7" class="text-center py-4 text-muted">No purchases found.</td>
@@ -244,8 +244,9 @@
                 <table id="payment-history-table" class="data-table">
                     <thead>
                         <tr>
-                            <th>Supplier</th>
                             <th>Invoice #</th>
+                            <th>Supplier</th>
+                            
                             <th>Amount</th>
                             <th>Method</th>
                             <th>Date</th>
@@ -254,12 +255,14 @@
                     </thead>
                     <tbody>
                         <tr *ngFor="let pay of purchasePayments">
-                            <td data-label="Supplier">{{ pay.supplier?.name }}</td>
                             <td data-label="Invoice #">{{ pay.purchase?.invoiceNo || '-' }}</td>
+                            <td data-label="Supplier">{{ pay.supplier?.name }}
+                                <span class="d-block small text-muted">{{ pay.supplier?.phone }}</span>
+                            </td>
                             <td data-label="Amount" class="font-weight-bold text-success">Rs. {{ pay.amount |
-                                number:'1.2-2' }}</td>
+                                number:'1.0-0' }}</td>
                             <td data-label="Method"><span class="badge badge-secondary">{{ pay.method }}</span></td>
-                            <td data-label="Date">{{ pay.paymentDate | date:'short' }}</td>
+                            <td data-label="Date">{{ pay.paymentDate | date }} {{ pay.paymentDate | date:'shortTime' }}</td>
                             <td data-label="Notes" class="text-truncate" style="max-width: 200px;" [title]="pay.notes">
                                 {{ pay.notes }}</td>
                         </tr>

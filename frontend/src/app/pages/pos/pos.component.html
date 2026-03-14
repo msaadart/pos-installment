@@ -14,7 +14,7 @@
                 </div>
                 <div class="product-info">
                     <h4>{{ product.name }}</h4>
-                    <p class="price">Rs. {{ product.price | number:'1.2-2' }}</p>
+                    <p class="price">Rs. {{ product.price | number:'1.0-0' }}</p>
                     <p class="stock">Stock: {{ product.stock }}</p>
                 </div>
             </div>
@@ -42,7 +42,7 @@
                 </div>
             </div>
             <div class="cart-item-action">
-                <span class="subtotal">Rs. {{ (item.quantity * item.price) | number:'1.2-2' }}</span>
+                <span class="subtotal">Rs. {{ (item.quantity * item.price) | number:'1.0-0' }}</span>
                 <button class="btn btn-danger btn-sm" (click)="removeFromCart(i)">&times;</button>
             </div>
         </div>
@@ -115,11 +115,11 @@
         <div class="checkout-summary">
             <div class="summary-row total-row">
                 <span>Total:</span>
-                <span>Rs. {{ total | number:'1.2-2' }}</span>
+                <span>Rs. {{ total | number:'1.0-0' }}</span>
             </div>
             <div *ngIf="saleType === 'INSTALLMENT'" class="summary-row remaining-row">
                 <span>Remaining:</span>
-                <span>Rs. {{ (total - downPayment) | number:'1.2-2' }}</span>
+                <span>Rs. {{ (total - downPayment) | number:'1.0-0' }}</span>
             </div>
         </div>
 

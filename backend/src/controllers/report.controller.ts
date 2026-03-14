@@ -16,7 +16,7 @@ export const getDashboard = async (req: AuthRequest, res: Response) => {
             filters.startDate = new Date(String(startDate));
             filters.endDate = new Date(String(endDate));
         }
-console.log('Dashboard filters:', filters);
+        // console.log('Dashboard filters:', filters);
         // if (req.query.startDate) filters.startDate = new Date(req.query.startDate as string);
         // if (req.query.endDate) filters.endDate = new Date(req.query.endDate as string);
 

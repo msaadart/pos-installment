@@ -54,7 +54,7 @@
                                     }}</span>
                             </td>
                             <td data-label="Total Amount" class="font-weight-bold">Rs. {{ plan.totalAmount |
-                                number:'1.2-2' }}</td>
+                                number:'1.0-0' }}</td>
                             <td data-label="Start Date">{{ plan.startDate | date }}</td>
                             <td data-label="End Date">{{ plan.endDate | date }}</td>
                             <td data-label="Status">
@@ -90,13 +90,13 @@
                     <p><strong>Phone:</strong> {{ selectedPlan.sale.customer?.phone }}</p>
                     <p><strong>Address:</strong> {{ selectedPlan.sale.customer?.address }}</p>
                     <p><strong>Monthly Installment:</strong> <span class="text-primary font-weight-bold"> Rs. {{
-                            selectedPlan.monthlyInstallment | number:'1.2-2' }}</span></p>
+                            selectedPlan.monthlyInstallment | number:'1.0-0' }}</span></p>
                 </div>
                 <div class="details-col">
-                    <p><strong>Total Amount:</strong> Rs. {{ selectedPlan.totalAmount | number:'1.2-2' }}</p>
-                    <p><strong>Down Payment:</strong> Rs. {{ selectedPlan.downPayment | number:'1.2-2' }}</p>
+                    <p><strong>Total Amount:</strong> Rs. {{ selectedPlan.totalAmount | number:'1.0-0' }}</p>
+                    <p><strong>Down Payment:</strong> Rs. {{ selectedPlan.downPayment | number:'1.0-0' }}</p>
                     <p><strong>Remaining Balance:</strong> <span class="text-danger font-weight-bold"> Rs. {{
-                            getRemaining(selectedPlan) | number:'1.2-2' }}</span></p>
+                            getRemaining(selectedPlan) | number:'1.0-0' }}</span></p>
                 </div>
             </div>
 
@@ -115,13 +115,13 @@
                     <tbody>
                         <tr *ngFor="let inst of selectedPlan.installments">
                             <td data-label="Due Date">{{ inst.dueDate | date }}</td>
-                            <td data-label="Amount" class="font-weight-bold">Rs. {{ inst.amount | number:'1.2-2' }}</td>
+                            <td data-label="Amount" class="font-weight-bold">Rs. {{ inst.amount | number:'1.0-0' }}</td>
                             <td data-label="Status">
                                 <span class="badge"
                                     [ngClass]="inst.status === 'PAID' ? 'badge-success' : 'badge-danger'">{{ inst.status
                                     }}</span>
                             </td>
-                            <td data-label="Payment Date">{{ inst.paidAt | date:'shortDate' || '-' }}</td>
+                            <td data-label="Payment Date">{{ inst.paidAt | date:'shortDate' || '-' }}   {{inst.paidAt | date:'shortTime' }}</td>
                             <td data-label="Action" class="text-right">
                                 <button *ngIf="inst.status !== 'PAID'" class="btn btn-primary btn-sm"
                                     (click)="openPayModal(inst)">Pay</button>
@@ -139,7 +139,7 @@
             <div class="card modal-card">
                 <h3>Pay Installment</h3>
                 <div class="payment-amount">
-                    Amount: <strong>Rs. {{ currentInstallment.amount | number:'1.2-2' }}</strong>
+                    Amount: <strong>Rs. {{ currentInstallment.amount | number:'1.0-0' }}</strong>
                 </div>
 
                 <div class="form-group mt-3">

@@ -18,26 +18,69 @@
 
         <!-- Stats Grid -->
         <div *ngIf="stats" class="stats-grid">
+
             <div class="stat-card primary-border">
-                <h3>Total Sales</h3>
-                <p class="text-primary">Rs. {{ stats.totalSales | number:'1.2-2' }}</p>
+                <h3>Sales</h3>
+
+                <p>
+                    <span class="label">Total Sales</span>
+                    <span class="value text-primary">Rs. {{ stats.totalSales | number:'1.0-0' }}</span>
+                </p>
+
+                <p>
+                    <span class="label">Customer Balance</span>
+                    <span class="value text-accent">Rs. {{ stats.totalRecivedAmount | number:'1.0-0' }}</span>
+                </p>
             </div>
+
             <div class="stat-card danger-border">
-                <h3>Total Expenses</h3>
-                <p class="text-danger">Rs. {{ stats.totalExpenses | number:'1.2-2' }}</p>
+                <h3>Expenses</h3>
+
+                <p>
+                    <span class="label">Total Expenses</span>
+                    <span class="value text-danger">Rs. {{ stats.totalExpenses | number:'1.0-0' }}</span>
+                </p>
             </div>
+
             <div class="stat-card secondary-border">
-                <h3>Total Products</h3>
-                <p class="text-secondary">{{ stats.totalProducts }}</p>
+                <h3>Inventory</h3>
+
+                <p>
+                    <span class="label space-around-label"><span>Products</span> <span class="value">{{ stats.totalProducts }}</span></span>
+                    
+                </p>
+
+                <p>
+                    <span class="label space-around-label"><span>Active Installments</span> <span class="value">{{ stats.activeInstallmentsCount }}</span></span>
+                    
+                </p>
+
+                <p>
+                    <span class="label space-around-label"><span>Customers</span> <span class="value">{{ stats.totalCustomers }}</span></span>
+                    
+                </p>
             </div>
-            <div class="stat-card accent-border">
-                <h3>Active Installments</h3>
-                <p class="text-accent">{{ stats.activeInstallmentsCount }}</p>
+
+            <div class="stat-card accent-border purchase-card">
+                <h3>Purchase</h3>
+                <div class="purchase-row">
+                <p>
+                    <span class="label">Total Purchase</span>
+                    <span class="value">Rs. {{ stats.purchase.total | number:'1.0-0' }}</span>
+                </p>
+
+                <p>
+                    <span class="label">Paid Amount</span>
+                    <span class="value">Rs. {{ stats.purchase.paid | number:'1.0-0' }}</span>
+                </p>
+
+                <p>
+                    <span class="label">Supplier Balance</span>
+                    <span class="value">Rs. {{ stats.purchase.balance | number:'1.0-0' }}</span>
+                </p>
+                </div>
             </div>
-            <div class="stat-card custom-border">
-                <h3>Total Customers</h3>
-                <p class="text-custom">{{ stats.totalCustomers }}</p>
-            </div>
+
         </div>
 
         <!-- Recent Sales Table -->
@@ -49,21 +92,26 @@
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>Invoice</th>
+                            <th>Name</th>
                             <th>Date</th>
                             <th>Amount</th>
                             <th>Sale Type</th>
+                            <th>Paid / Balance</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr *ngFor="let sale of stats.recentSales">
-                            <td>{{ sale.invoiceNo }}</td>
-                            <td>{{ sale.createdAt | date:'shortDate' }}</td>
-                            <td class="font-weight-bold">Rs. {{ sale.totalAmount | number:'1.2-2' }}</td>
+                            <td>{{ sale.customer?.name }}
+                                <span class="d-block small text-muted">CNIC: {{ sale.customer?.cnic }}</span>
+                            </td>
+                            <td>{{ sale.createdAt | date }} {{sale.createdAt | date:'shortTime' }}</td>
+                            <td class="font-weight-bold">Rs. {{ sale.totalAmount | number:'1.0-0' }}</td>
                             <td>{{ sale.saleType }}</td>
+                            <td>Rs. {{ sale.paidAmount | number:'1.0-0' }} / Rs. {{ sale.balance | number:'1.0-0' }}
+                            </td>
                         </tr>
                         <tr *ngIf="stats.recentSales.length === 0">
-                            <td colspan="3" class="text-center py-3">No recent sales found.</td>
+                            <td colspan="5" class="text-center py-3">No recent sales found.</td>
                         </tr>
                     </tbody>
                 </table>

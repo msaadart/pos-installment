@@ -149,6 +149,16 @@ export const payInstallment = async (id: number, amount: number, paymentMethod: 
             [installment.planId]
         );
 
+        await connection.query(
+            `UPDATE sale s
+             JOIN installmentplan ip ON s.id = ip.saleId
+             JOIN installment i ON ip.id = i.planId
+             SET s.balance = s.balance - ?,
+                 s.paidAmount = s.paidAmount + ?
+             WHERE i.id = ?`,
+            [amount, amount, id]
+        );
+
         if (unpaidCount[0].count === 0) {
             await connection.query(
                 `UPDATE installmentplan SET status = 'COMPLETED', endDate = CURRENT_TIMESTAMP WHERE id = ?`,

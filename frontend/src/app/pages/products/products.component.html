@@ -154,7 +154,7 @@
                                 <span class="d-block small text-muted">Barcode: {{ product.barcode }}</span>
                             </td>
                             <td data-label="Price" class="text-primary font-weight-bold">Rs. {{ product.price |
-                                number:'1.2-2' }}</td>
+                                number:'1.0-0' }}</td>
                             <td data-label="Stock">
                                 <span class="badge"
                                     [ngClass]="product.stock > 10 ? 'badge-success' : (product.stock > 0 ? 'badge-warning' : 'badge-danger')">

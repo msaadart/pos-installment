@@ -63,7 +63,7 @@
                                 <td data-label="Date">{{ sale.createdAt | date }}</td>
                                 <td data-label="User">{{ sale.user?.name }}</td>
                                 <td data-label="Amount" class="font-weight-bold text-success">Rs. {{ sale.totalAmount |
-                                    number:'1.2-2' }}</td>
+                                    number:'1.0-0' }}</td>
                                 <td data-label="Type">
                                     <span class="badge"
                                         [ngClass]="sale.saleType === 'CASH' ? 'badge-primary' : 'badge-warning'">{{
@@ -129,9 +129,9 @@
                                 <td data-label="Customer" class="font-weight-bold">{{ item.plan.sale.customer?.name }}
                                 </td>
                                 <td data-label="Due Date">{{ item.dueDate | date }}</td>
-                                <td data-label="Amount">Rs. {{ item.amount | number:'1.2-2' }}</td>
+                                <td data-label="Amount">Rs. {{ item.amount | number:'1.0-0' }}</td>
                                 <td data-label="Balance" class="font-weight-bold text-danger">Rs. {{ (item.amount -
-                                    item.paidAmount) | number:'1.2-2' }}</td>
+                                    item.paidAmount) | number:'1.0-0' }}</td>
                                 <td data-label="Status">
                                     <span class="badge"
                                         [ngClass]="isOverdue(item.dueDate) ? 'badge-danger' : 'badge-warning'">
@@ -176,11 +176,11 @@
                                 <td data-label="Active Plans">
                                     <span class="badge badge-secondary">{{ item.totalItems }}</span>
                                 </td>
-                                <td data-label="Paid So Far" class="text-success">Rs. {{ item.totalPaid | number:'1.2-2'
+                                <td data-label="Paid So Far" class="text-success">Rs. {{ item.totalPaid | number:'1.0-0'
                                     }}</td>
-                                <td data-label="Remaining">Rs. {{ item.remainingBalance | number:'1.2-2' }}</td>
+                                <td data-label="Remaining">Rs. {{ item.remainingBalance | number:'1.0-0' }}</td>
                                 <td data-label="Currently Due" class="font-weight-bold text-danger">Rs. {{
-                                    item.dueAmount | number:'1.2-2' }}</td>
+                                    item.dueAmount | number:'1.0-0' }}</td>
                             </tr>
                             <tr *ngIf="customerSummary.length === 0">
                                 <td colspan="5" class="text-center py-4 text-muted">No customer summary found for the

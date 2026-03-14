@@ -92,11 +92,11 @@
                     </thead>
                     <tbody>
                         <tr *ngFor="let e of expenses">
-                            <td data-label="Date">{{ e.date | date:'shortDate' }}</td>
+                            <td data-label="Date">{{ e.date | date }}   {{e.date | date:'shortTime' }}</td>
                             <td data-label="Description">{{ e.description }}</td>
                             <td data-label="Category"><span class="badge badge-secondary">{{ e.category }}</span></td>
                             <td data-label="Amount" class="font-weight-bold text-danger">Rs. {{ e.amount |
-                                number:'1.2-2' }}</td>
+                                number:'1.0-0' }}</td>
                             <td data-label="Shop">{{ e.shop?.name }}</td>
                             <td data-label="Actions" class="action-buttons">
                                 @if(user?.role === 'SUPER_ADMIN' || user?.role === 'SHOP_ADMIN'){

@@ -1,4 +1,5 @@
 /* dashboard.component.css */
+
 .page-container {
     padding-top: 1rem;
 }
@@ -7,6 +8,8 @@
     max-width: 1200px;
     margin: 0 auto;
 }
+
+/* Filters */
 
 .filter-card {
     display: flex;
@@ -32,36 +35,71 @@
     flex: 1;
 }
 
+/* Stats Grid */
+
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 1.5rem;
-    margin-top: 1.5rem;
-    margin-bottom: 1.5rem;
+    margin: 1.5rem 0;
 }
 
 .stat-card {
     background: white;
-    padding: 1.5rem;
+    padding: 1rem;
     border-radius: var(--radius-md, 0.375rem);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
     border-left: 5px solid transparent;
+    transition: transform .2s ease, box-shadow .2s ease;
 }
+
+/* Hover effect */
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+/* Card title */
 
 .stat-card h3 {
-    font-size: 0.875rem;
+    font-size: 0.85rem;
     color: #64748b;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.6rem;
     text-transform: uppercase;
     font-weight: 600;
-    margin-top: 0;
 }
 
+/* Label + Value Layout */
+
 .stat-card p {
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin: 0;
+    display: flex;
+    flex-direction: column;
+    margin: 8px 0;
 }
+
+/* Small label */
+
+.stat-card .label {
+    font-size: 12px;
+    color: #000000;
+    font-weight: 500;
+}
+
+/* Large value */
+
+.stat-card .value {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.space-around-label{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Borders */
 
 .primary-border {
     border-left-color: var(--primary, #1e293b);
@@ -83,25 +121,15 @@
     border-left-color: #6f42c1;
 }
 
-.text-primary {
-    color: var(--primary, #1e293b);
-}
+/* Text Colors */
 
-.text-danger {
-    color: var(--danger, #ef4444);
-}
+.text-primary { color: var(--primary, #1e293b); }
+.text-danger { color: var(--danger, #ef4444); }
+.text-secondary { color: var(--secondary, #64748b); }
+.text-accent { color: var(--accent, #3b82f6); }
+.text-custom { color: #6f42c1; }
 
-.text-secondary {
-    color: var(--secondary, #64748b);
-}
-
-.text-accent {
-    color: var(--accent, #3b82f6);
-}
-
-.text-custom {
-    color: #6f42c1;
-}
+/* Table */
 
 .mt-2 {
     margin-top: 1.5rem;
@@ -142,20 +170,64 @@
     font-size: 0.875rem;
 }
 
-.font-weight-bold {
-    font-weight: 600;
-}
+/* Helpers */
 
-.text-center {
-    text-align: center;
-}
+.font-weight-bold { font-weight: 600; }
+.text-center { text-align: center; }
 
 .py-3 {
     padding-top: 1rem !important;
     padding-bottom: 1rem !important;
 }
 
+/* small cards */
+.small-card{
+    grid-column: span 1;
+}
+
+/* bigger purchase card */
+.purchase-card{
+    grid-column: span 2;
+}
+
+/* purchase values grid */
+.purchase-row{
+     display:flex;
+    flex-wrap:wrap;
+}
+
+.purchase-row p{
+    width:50%;
+    display:flex;
+    margin-top: 0;
+    flex-direction:column;
+}
+
+
+/* label */
+.label{
+    font-size:12px;
+    color:#94a3b8;
+}
+
+/* value */
+.value{
+    font-size:20px;
+    font-weight:700;
+}
+
+/* Mobile */
+
 @media (max-width: 640px) {
+    .small-card, .purchase-card {
+        grid-column: span 1;
+    }
+
+    .purchase-row{
+        display:grid;
+        grid-template-columns: 1fr;
+    }
+
     .filter-card {
         flex-direction: column;
         align-items: stretch;
@@ -169,4 +241,5 @@
     .stats-grid {
         grid-template-columns: 1fr;
     }
+
 }

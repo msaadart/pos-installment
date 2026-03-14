@@ -81,7 +81,7 @@
                                 <span class="badge" [ngClass]="c.isActive ? 'badge-success' : 'badge-danger'">{{
                                     c.isActive ? 'Yes' : 'No' }}</span>
                             </td>
-                            <td data-label="Credit Limit">Rs. {{ c.creditLimit | number:'1.2-2' }}</td>
+                            <td data-label="Credit Limit">Rs. {{ c.creditLimit | number:'1.0-0' }}</td>
                             <td data-label="Actions" *ngIf="['SUPER_ADMIN', 'SHOP_ADMIN'].includes(user?.role)">
                                 <div class="action-buttons">
                                     <button class="btn btn-secondary btn-sm" (click)="editCustomer(c)">Edit</button>
