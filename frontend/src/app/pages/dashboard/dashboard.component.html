@@ -1,114 +1,132 @@
 <div *ngIf="user$ | async as user" class="page-container">
     <div class="content-wrapper">
+        @if(user?.role === 'SUPER_ADMIN' || user?.role === 'SHOP_ADMIN'){
         <!-- Filters -->
-        <div class="card filter-card">
-            <div class="filter-group">
-                <label class="form-label d-mobile-none">Start Date</label>
-                <input type="date" class="form-control" [(ngModel)]="startDate" placeholder="Start Date">
-            </div>
-            <div class="filter-group">
-                <label class="form-label d-mobile-none">End Date</label>
-                <input type="date" class="form-control" [(ngModel)]="endDate" placeholder="End Date">
-            </div>
-            <div class="filter-actions">
-                <button class="btn btn-primary" (click)="loadStats()">Search</button>
-                <button class="btn btn-secondary" (click)="resetFilters()">Reset</button>
-            </div>
-        </div>
-
-        <!-- Stats Grid -->
-        <div *ngIf="stats" class="stats-grid">
-
-            <div class="stat-card primary-border">
-                <h3>Sales</h3>
-
-                <p>
-                    <span class="label">Total Sales</span>
-                    <span class="value text-primary">Rs. {{ stats.totalSales | number:'1.0-0' }}</span>
-                </p>
-
-                <p>
-                    <span class="label">Customer Balance</span>
-                    <span class="value text-accent">Rs. {{ stats.totalRecivedAmount | number:'1.0-0' }}</span>
-                </p>
-            </div>
-
-            <div class="stat-card danger-border">
-                <h3>Expenses</h3>
-
-                <p>
-                    <span class="label">Total Expenses</span>
-                    <span class="value text-danger">Rs. {{ stats.totalExpenses | number:'1.0-0' }}</span>
-                </p>
-            </div>
-
-            <div class="stat-card secondary-border">
-                <h3>Inventory</h3>
-
-                <p>
-                    <span class="label space-around-label"><span>Products</span> <span class="value">{{ stats.totalProducts }}</span></span>
-                    
-                </p>
-
-                <p>
-                    <span class="label space-around-label"><span>Active Installments</span> <span class="value">{{ stats.activeInstallmentsCount }}</span></span>
-                    
-                </p>
-
-                <p>
-                    <span class="label space-around-label"><span>Customers</span> <span class="value">{{ stats.totalCustomers }}</span></span>
-                    
-                </p>
-            </div>
-
-            <div class="stat-card accent-border purchase-card">
-                <h3>Purchase</h3>
-                <div class="purchase-row">
-                <p>
-                    <span class="label">Total Purchase</span>
-                    <span class="value">Rs. {{ stats.purchase.total | number:'1.0-0' }}</span>
-                </p>
-
-                <p>
-                    <span class="label">Paid Amount</span>
-                    <span class="value">Rs. {{ stats.purchase.paid | number:'1.0-0' }}</span>
-                </p>
-
-                <p>
-                    <span class="label">Supplier Balance</span>
-                    <span class="value">Rs. {{ stats.purchase.balance | number:'1.0-0' }}</span>
-                </p>
+            <div class="card filter-card">
+                <div class="filter-group">
+                    <label class="form-label d-mobile-none">Start Date</label>
+                    <input type="date" class="form-control" [(ngModel)]="startDate" placeholder="Start Date">
+                </div>
+                <div class="filter-group">
+                    <label class="form-label d-mobile-none">End Date</label>
+                    <input type="date" class="form-control" [(ngModel)]="endDate" placeholder="End Date">
+                </div>
+                <div class="filter-actions">
+                    <button class="btn btn-primary" (click)="loadStats()">Search</button>
+                    <button class="btn btn-secondary" (click)="resetFilters()">Reset</button>
                 </div>
             </div>
 
-        </div>
+            <!-- Stats Grid -->
+            <div *ngIf="stats" class="stats-grid">
+
+                <div class="stat-card primary-border">
+                    <h3>Sales</h3>
+
+                    <p>
+                        <span class="label">Total Sales</span>
+                        <span class="value text-primary">Rs. {{ stats.totalSales | number:'1.0-0' }}</span>
+                    </p>
+
+                    <p>
+                        <span class="label">Customer Balance</span>
+                        <span class="value text-accent">Rs. {{ stats.totalRecivedAmount | number:'1.0-0' }}</span>
+                    </p>
+                </div>
+
+                <div class="stat-card danger-border">
+                    <h3>Expenses</h3>
+
+                    <p>
+                        <span class="label">Total Expenses</span>
+                        <span class="value text-danger">Rs. {{ stats.expenses.totalExpense | number:'1.0-0' }}</span>
+                    </p>
+                    <p> 
+                        <span class="label">Total Income</span>
+                        <span class="value text-success">Rs. {{ stats.expenses.totalIncome | number:'1.0-0' }}</span>
+                    </p>
+                </div>
+
+                <div class="stat-card secondary-border">
+                    <h3>Inventory</h3>
+
+                    <p>
+                        <span class="label space-around-label"><span>Products</span> <span class="value">{{ stats.totalProducts }}</span></span>
+                        
+                    </p>
+
+                    <p>
+                        <span class="label space-around-label"><span>Active Installments</span> <span class="value">{{ stats.activeInstallmentsCount }}</span></span>
+                        
+                    </p>
+
+                    <p>
+                        <span class="label space-around-label"><span>Customers</span> <span class="value">{{ stats.totalCustomers }}</span></span>
+                        
+                    </p>
+                </div>
+
+                <div class="stat-card accent-border purchase-card">
+                    <h3>Purchase</h3>
+                    <div class="purchase-row">
+                    <p>
+                        <span class="label">Total Purchase</span>
+                        <span class="value">Rs. {{ stats.purchase.total | number:'1.0-0' }}</span>
+                    </p>
+
+                    <p>
+                        <span class="label">Paid Amount</span>
+                        <span class="value">Rs. {{ stats.purchase.paid | number:'1.0-0' }}</span>
+                    </p>
+
+                    <p>
+                        <span class="label">Supplier Balance</span>
+                        <span class="value">Rs. {{ stats.purchase.balance | number:'1.0-0' }}</span>
+                    </p>
+                    </div>
+                </div>
+
+            </div>
+        }
 
         <!-- Recent Sales Table -->
         <div *ngIf="stats?.recentSales" class="card mt-2">
             <div class="card-header">
-                <h3>Recent Sales</h3>
+                <h3>Recent Sales </h3>
+                    @if(user?.role !== 'SUPER_ADMIN' && user?.role !== 'SHOP_ADMIN') {
+                        <div>
+                                <select class="form-control custom-select" [(ngModel)]="saleType" (change)="onSaleTypeChange()">
+                                    <option value="CASH">CASH</option>
+                                    <option value="INSTALLMENT">INSTALLMENT</option>
+                                </select>
+                        </div>
+                    }
+                
             </div>
             <div class="table-responsive">
                 <table class="data-table">
                     <thead>
                         <tr>
+                            <th>Invoice #</th>
                             <th>Name</th>
                             <th>Date</th>
                             <th>Amount</th>
                             <th>Sale Type</th>
                             <th>Paid / Balance</th>
+                            <th>User</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr *ngFor="let sale of stats.recentSales">
+                            <td>{{ sale.invoiceNo }}</td>
                             <td>{{ sale.customer?.name }}
                                 <span class="d-block small text-muted">CNIC: {{ sale.customer?.cnic }}</span>
                             </td>
                             <td>{{ sale.createdAt | date }} {{sale.createdAt | date:'shortTime' }}</td>
                             <td class="font-weight-bold">Rs. {{ sale.totalAmount | number:'1.0-0' }}</td>
                             <td>{{ sale.saleType }}</td>
-                            <td>Rs. {{ sale.paidAmount | number:'1.0-0' }} / Rs. {{ sale.balance | number:'1.0-0' }}
-                            </td>
+                            <td>Rs. {{ sale.paidAmount | number:'1.0-0' }} / Rs. {{ sale.balance | number:'1.0-0' }}</td>
+                            <td>{{ sale.user?.name }}</td>
                         </tr>
                         <tr *ngIf="stats.recentSales.length === 0">
                             <td colspan="5" class="text-center py-3">No recent sales found.</td>

@@ -1,5 +1,45 @@
 import pool from '../utils/db';
 
+export const getRecentSale = async (filters: any = {}) => {
+    const { shopId, saleType = 'CASH' } = filters;
+
+    let query = `
+        SELECT s.*, u.name as userName, 
+               c.name as customerName, 
+               c.phone as customerPhone, 
+               c.cnic as customerCnic
+        FROM sale s
+        LEFT JOIN user u ON s.userId = u.id
+        LEFT JOIN customer c ON s.customerId = c.id
+        WHERE s.saleType = ?
+    `;
+
+    const params: any[] = [];
+    params.push(saleType);
+    
+    if (shopId) {
+        query += ` AND s.shopId = ?`;
+        params.push(shopId);
+    }
+
+    query += `
+        ORDER BY s.createdAt DESC
+        LIMIT 200
+    `;
+
+    const [rows]: any = await pool.query(query, params);
+
+    return {
+        recentSales: rows.map((s: any) => ({
+            ...s,
+            user: s.userName ? { name: s.userName } : null,
+            customer: s.customerName
+                ? { name: s.customerName, phone: s.customerPhone, cnic: s.customerCnic }
+                : null
+        }))
+    };
+};
+
 export const getDashboardStats = async (filters: any = {}) => {
     const { shopId, startDate } = filters;
 
@@ -54,7 +94,9 @@ export const getDashboardStats = async (filters: any = {}) => {
     // Expense Aggregate (uses different date column)
     const expenseFilter = buildFilters('expense', 'date');
     const expAggQuery = `
-        SELECT SUM(amount) as total 
+        SELECT  
+        SUM(CASE WHEN type='INCOME' THEN amount ELSE 0 END) AS totalIncome,
+        SUM(CASE WHEN type='EXPENSE' THEN amount ELSE 0 END) AS totalExpense
         FROM expense 
         ${expenseFilter.conditions}
         AND isActive = 1
@@ -138,7 +180,10 @@ export const getDashboardStats = async (filters: any = {}) => {
         totalShops: totalShops[0]?.cnt || 0,
         activeInstallmentsCount: activeInstallments[0]?.cnt || 0,
         totalCustomers: totalCustomers[0]?.cnt || 0,
-        totalExpenses: Number(totalExpensesAggregate[0]?.total) || 0,
+        expenses: {
+            totalIncome: Number(totalExpensesAggregate[0]?.totalIncome) || 0,
+            totalExpense: Number(totalExpensesAggregate[0]?.totalExpense) || 0
+        },
         totalRecivedAmount: Number(totalRecivedAmountAggregate[0]?.total) || 0,
         purchase: purchaseAggregate.map((p: any) => ({
             total: Number(p.total) || 0,

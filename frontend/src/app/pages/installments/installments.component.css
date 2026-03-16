@@ -194,6 +194,9 @@
     gap: 0.5rem;
     flex-wrap: wrap;
 }
+.mr{
+    margin-right: 0.5rem;
+}
 
 /* Details Card */
 .details-card {

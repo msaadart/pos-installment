@@ -12,6 +12,9 @@
                         }
                     </span>
                 </div>
+                <div class="total-expense">
+                    Total Expense: <span class="expense-value font-weight-bold text-danger">Rs. {{ totalExpense | number:'1.0-0' }}</span>
+                </div>
                 <button class="btn btn-primary" (click)="toggleForm()">
                     <span class="icon">{{ showForm ? '&times;' : '+' }} </span> New Expense
                 </button>
@@ -38,16 +41,38 @@
 
                 <div class="form-row">
                     <div class="form-group col-md-6">
+                        <label class="form-label">Payment Type</label>
+                        <select class="form-control custom-select" formControlName="paymentMethod">
+                            <option value="CASH">CASH</option>
+                            <option value="ONLINE">ONLINE</option>
+                        </select>
+                    </div>
+                    @if(expenseForm.value.paymentMethod === 'ONLINE') {
+                        <div class="form-group col-md-6">
+                            <label class="form-label">Reference Id</label>
+                            <input type="text" class="form-control" formControlName="referenceId" placeholder="Payment reference ID...">
+                        </div>
+                    }
+
+                    <div class="form-group col-md-6">
+                        <label class="form-label">Expense Date</label>
+                        <input type="datetime-local" class="form-control" formControlName="date" title="Start Date">
+                    </div>
+
+                     <div class="form-group col-md-6">
+                        <label class="form-label">Description</label>
+                        <input type="text" class="form-control" formControlName="description">
+                    </div>
+
+                    <div class="form-group col-md-6">
                         <label class="form-label">Shop</label>
                         <select class="form-control custom-select" formControlName="shopId">
                             <option *ngFor="let shop of shops" [value]="shop.id">{{ shop.name }}</option>
                         </select>
                     </div>
-                    <div class="form-group col-md-6">
-                        <label class="form-label">Description</label>
-                        <input type="text" class="form-control" formControlName="description">
-                    </div>
+                   
                 </div>
+                
 
                 <div class="form-row">
                     <div class="form-actions mt-3">
@@ -86,8 +111,11 @@
                             <th>Description</th>
                             <th>Category</th>
                             <th>Amount</th>
-                            <th>Shop</th>
+                            <th>Payment Method</th>
+                            <th>User</th>
+                            @if(user?.role === 'SUPER_ADMIN' || user?.role === 'SHOP_ADMIN'){
                             <th>Actions</th>
+                            }
                         </tr>
                     </thead>
                     <tbody>
@@ -95,16 +123,16 @@
                             <td data-label="Date">{{ e.date | date }}   {{e.date | date:'shortTime' }}</td>
                             <td data-label="Description">{{ e.description }}</td>
                             <td data-label="Category"><span class="badge badge-secondary">{{ e.category }}</span></td>
-                            <td data-label="Amount" class="font-weight-bold text-danger">Rs. {{ e.amount |
-                                number:'1.0-0' }}</td>
-                            <td data-label="Shop">{{ e.shop?.name }}</td>
-                            <td data-label="Actions" class="action-buttons">
-                                @if(user?.role === 'SUPER_ADMIN' || user?.role === 'SHOP_ADMIN'){
-                                <button class="btn btn-danger btn-sm" (click)="deleteExpense(e.id)">Delete</button>
-                                } @else {
-                                <span>-</span>
-                                }
+                            <td data-label="Amount" class="font-weight-bold text-danger">
+                                Rs. {{ e.amount | number:'1.0-0' }}
                             </td>
+                            <td data-label="Payment Method">{{ e.paymentMethod }}</td>
+                            <td data-label="User">{{ e.user?.name || 'N/A' }}</td>
+                            @if(user?.role === 'SUPER_ADMIN' && e.allowDeleted || user?.role === 'SHOP_ADMIN' && e.allowDeleted){
+                                <td data-label="Actions" class="action-buttons">
+                                    <button class="btn btn-danger btn-sm" (click)="deleteExpense(e.id)">Delete</button>
+                                </td>
+                            }
                         </tr>
                         <tr *ngIf="expenses.length === 0">
                             <td colspan="6" class="text-center py-4 text-muted">No expenses found for the selected

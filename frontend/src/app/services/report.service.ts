@@ -19,6 +19,12 @@ export class ReportService {
         return this.http.get<any>(url);
     }
 
+    getRecentSale(saleType: 'CASH' | 'INSTALLMENT'): Observable<any> {
+        let params = new URLSearchParams();
+        params.append('saleType', saleType);
+        return this.http.get<any>(`${this.apiUrl}/recent-sale?${params.toString()}`);
+    }
+
     getSalesReport(startDate: string, endDate: string): Observable<any[]> {
         return this.http.get<any[]>(`${this.apiUrl}/sales?startDate=${startDate}&endDate=${endDate}`);
     }

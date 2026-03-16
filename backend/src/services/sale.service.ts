@@ -1,7 +1,7 @@
 import pool from '../utils/db';
 
 export const createSale = async (data: any) => {
-    const { shopId, userId, customerId, items, discount, paymentMethod, saleType, paidAmount } = data;
+    const { shopId, userId, customerId, items, discount, paymentMethod, saleType, paidAmount, referenceId } = data;
 
     const connection = await pool.getConnection();
     try {
@@ -30,9 +30,9 @@ export const createSale = async (data: any) => {
         // 1. Create Sale Record
         const [saleResult]: any = await connection.query(
             `INSERT INTO sale 
-            (invoiceNo, totalAmount, discount, netAmount, paidAmount, balance, status, paymentMethod, saleType, shopId, userId, customerId) 
-            VALUES (?, ?, ?, ?, ?, ?, 'COMPLETED', ?, ?, ?, ?, ?)`,
-            [invoiceNo, totalAmount, discount || 0, netAmount, paidAmount || 0, balance, paymentMethod || 'CASH', saleType || 'CASH', shopId, userId, customerId || null]
+            (invoiceNo, totalAmount, discount, netAmount, paidAmount, balance, status, paymentMethod, saleType, shopId, userId, customerId, referenceId) 
+            VALUES (?, ?, ?, ?, ?, ?, 'COMPLETED', ?, ?, ?, ?, ?, ?)`,
+            [invoiceNo, totalAmount, discount || 0, netAmount, paidAmount || 0, balance, paymentMethod || 'CASH', saleType || 'CASH', shopId, userId, customerId || null, referenceId || null]
         );
         const saleId = saleResult.insertId;
 
@@ -77,6 +77,12 @@ export const createSale = async (data: any) => {
                 );
             }
         }
+
+        //add expense and income record
+        await connection.query(
+                'INSERT INTO expense (description, amount, category, shopId, userId, type, paymentMethod, referenceId, allowDeleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [invoiceNo, paidAmount, 'sale ' + saleType, shopId, userId || null, 'INCOME', paymentMethod || 'CASH', referenceId || null, 0]
+        );
 
         await connection.commit();
 

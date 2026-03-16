@@ -18,6 +18,7 @@ export class DashboardComponent implements OnInit {
   stats: any = null;
   startDate: string = '';
   endDate: string = '';
+  saleType: 'CASH' | 'INSTALLMENT' = 'CASH';
 
   constructor(
     private authService: AuthService,
@@ -33,7 +34,15 @@ export class DashboardComponent implements OnInit {
     const filters: any = {};
     if (this.startDate) filters.startDate = this.startDate;
     if (this.endDate) filters.endDate = this.endDate;
-    this.reportService.getDashboardStats(filters).subscribe(data => this.stats = data);
+    if (this.authService.getCurrentUser()?.role !== 'SUPER_ADMIN' && this.authService.getCurrentUser()?.role !== 'SHOP_ADMIN') {
+      this.onSaleTypeChange();
+    } else {
+      this.reportService.getDashboardStats(filters).subscribe(data => this.stats = data);
+    }
+  }
+
+  onSaleTypeChange() {
+    this.reportService.getRecentSale(this.saleType).subscribe(data => this.stats = data);
   }
 
   resetFilters() {

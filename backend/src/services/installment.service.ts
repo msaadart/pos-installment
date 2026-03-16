@@ -122,7 +122,7 @@ export const getInstallmentPlans = async (filters: any = {}) => {
     return [];
 };
 
-export const payInstallment = async (id: number, amount: number, paymentMethod: string = 'CASH', referenceId?: string) => {
+export const payInstallment = async (id: number, amount: number, paymentMethod: string = 'CASH', referenceId?: string, user?: any) => {
     if (amount <= 0) throw new Error('Amount must be greater than 0');
 
     const connection = await pool.getConnection();
@@ -165,6 +165,11 @@ export const payInstallment = async (id: number, amount: number, paymentMethod: 
                 [installment.planId]
             );
         }
+
+        await connection.query(
+                'INSERT INTO expense (description, amount, category, shopId, userId, type, paymentMethod, referenceId, allowDeleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                ['installment id '+ installment.planId, amount, 'installment payment', user.shopId, user.id, 'INCOME', paymentMethod || 'CASH', referenceId || null, 0]
+        );
 
         await connection.commit();
 

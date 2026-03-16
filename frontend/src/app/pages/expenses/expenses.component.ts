@@ -14,6 +14,7 @@ import { AuthService } from '../../services/auth.service';
 })
 export class ExpensesComponent implements OnInit {
     expenses: any[] = [];
+    totalExpense: number = 0;
     shops: any[] = [];
     expenseForm: FormGroup;
     showForm = false;
@@ -33,7 +34,11 @@ export class ExpensesComponent implements OnInit {
             description: ['', Validators.required],
             amount: [0, [Validators.required, Validators.min(0.01)]],
             category: [''],
-            shopId: [null, Validators.required]
+            paymentMethod: ['CASH', Validators.required], 
+            referenceId: [''], 
+            date: [''],
+            shopId: [null, Validators.required],
+            allowDeleted: [true]         
         });
     }
 
@@ -55,8 +60,9 @@ export class ExpensesComponent implements OnInit {
         if (this.searchTerm) filters.search = this.searchTerm;
         if (this.startDate) filters.startDate = this.startDate;
         if (this.endDate) filters.endDate = this.endDate;
-        this.expenseService.getAllExpenses(filters).subscribe(data => this.expenses = data);
+        this.expenseService.getAllExpenses(filters).subscribe(data => {this.expenses = data.data, this.totalExpense = data.totalExpense});
         this.shopService.getAllShops().subscribe(data => this.shops = data);
+        console.log(this.expenses);
     }
 
     onSearch() {

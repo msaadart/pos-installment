@@ -203,6 +203,11 @@ export const clearPurchaseBalance = async (purchaseId: number, amount: number, m
             [purchaseId, purchase.supplierId, purchase.shopId, amount, method, notes || null]
         );
 
+        await connection.query(
+                'INSERT INTO expense (description, amount, category, shopId, userId, type, paymentMethod, referenceId, allowDeleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [purchase.invoiceNo, amount, 'purchase payment clear', purchase.shopId, purchase.userId || null, 'EXPENSE', method || 'CASH', notes || null, 0]
+        );
+
         await connection.commit();
         return { success: true };
     } catch (error) {

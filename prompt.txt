@@ -55,8 +55,9 @@ check database for do it improve the performance add indexing
 
 
 ---
-repots
-when i click download pdf all data isn't coming. set the pdf ui it's not coming properly.
+don't show query error on client
+
+ 
 
 
 ---

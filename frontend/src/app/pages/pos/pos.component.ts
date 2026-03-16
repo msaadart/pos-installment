@@ -33,6 +33,8 @@ export class PosComponent implements OnInit {
     showCustomerList = false;
     downPayment: number = 0;
     duration: number = 6;
+    paymentMethod: 'CASH' | 'ONLINE' | 'MIXED' | 'BANK_TRANSFER' = 'CASH';
+    referenceId: string = '';
     apiUrl = environment.baseUrl;
 
     shops: any[] = [];
@@ -168,9 +170,10 @@ export class PosComponent implements OnInit {
             shopId: this.user.shopId || 1,
             userId: this.user.id,
             customerId: Number(this.selectedCustomerId),
-            paymentMethod: this.saleType === 'CASH' ? 'CASH' : 'MIXED',
+            paymentMethod: this.paymentMethod,
             saleType: this.saleType,
             paidAmount: this.saleType === 'CASH' ? this.total : this.downPayment,
+            referenceId: this.referenceId,
             items: this.cart.map(item => ({
                 productId: item.product.id,
                 quantity: item.quantity,
@@ -189,6 +192,9 @@ export class PosComponent implements OnInit {
                 this.cart = [];
                 this.downPayment = 0;
                 this.selectedCustomerId = null;
+                this.customerSearch = '';
+                this.referenceId = '';
+                this.saleType = 'CASH';
                 this.submitted = false;
                 this.productService.getAllProducts().subscribe(data => {
                     this.products = data;

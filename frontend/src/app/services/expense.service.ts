@@ -15,8 +15,8 @@ export class ExpenseService {
         return this.http.post(this.apiUrl, expenseData);
     }
 
-    getAllExpenses(filters: any = {}): Observable<any[]> {
-        return this.http.get<any[]>(this.apiUrl, { params: filters });
+    getAllExpenses(filters: any = {}): Observable<any> {
+        return this.http.get<any>(this.apiUrl, { params: filters });
     }
 
     deleteExpense(id: number): Observable<any> {

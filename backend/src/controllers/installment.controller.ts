@@ -35,8 +35,9 @@ export const getInstallmentPlans = async (req: AuthRequest, res: Response) => {
 
 export const payInstallment = async (req: Request, res: Response) => {
     try {
+        const user = (req as AuthRequest).user;
         const { amount, paymentMethod, referenceId } = req.body;
-        const installment = await installmentService.payInstallment(Number(req.params.id), amount, paymentMethod, referenceId);
+        const installment = await installmentService.payInstallment(Number(req.params.id), amount, paymentMethod, referenceId, user);
         res.json(installment);
     } catch (error: any) {
         res.status(500).json({ message: error.message });

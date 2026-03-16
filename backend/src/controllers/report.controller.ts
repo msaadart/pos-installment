@@ -2,6 +2,18 @@ import { Request, Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import * as reportService from '../services/report.service';
 
+export const getRecentSale = async (req: AuthRequest, res: Response) => {
+    try {
+        const filters: any = {};
+        filters.shopId = req.user.shopId;
+        filters.saleType = String(req.query.saleType || 'CASH');
+        const stats = await reportService.getRecentSale(filters);
+        res.json(stats);
+    } catch (error: any) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 export const getDashboard = async (req: AuthRequest, res: Response) => {
     try {
         const filters: any = {};

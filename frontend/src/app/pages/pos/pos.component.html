@@ -56,6 +56,21 @@
                 </select>
             </div>
 
+             <div class="form-group">
+                <label class="form-label">Payment Method</label>
+                <select class="form-control custom-select" [(ngModel)]="paymentMethod">
+                    <option value="CASH">CASH</option>
+                    <option value="BANK_TRANSFER">BANK_TRANSFER</option>
+                    <option value="ONLINE">ONLINE</option>
+                    <option value="MIXED">MIXED</option>
+                </select>
+            </div>
+
+            <div *ngIf="paymentMethod != 'CASH'" class="form-group">
+                <label class="form-label">Reference Id</label>
+                <input type="text" class="form-control" [(ngModel)]="referenceId">
+            </div>
+
             <div class="form-group">
                 <label class="form-label">Customer</label>
                 <div class="autocomplete-wrapper">
