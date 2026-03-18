@@ -11,7 +11,7 @@ export const createExpense = async (data: any) => {
 };
 
 export const getAllExpenses = async (filters: any) => {
-    const { startDate, endDate, shopId, search, type = 'EXPENSE' } = filters;
+    const { startDate, endDate, shopId, search, type, role } = filters;
 
     if (startDate && !endDate) {
         throw new Error('Please select end date');
@@ -47,7 +47,10 @@ export const getAllExpenses = async (filters: any) => {
         params.push(end);
     }
 
-    if (type) {
+    // If user is not admin, force type = EXPENSE
+    if (!(role === 'SUPER_ADMIN' || role === 'SHOP_ADMIN')) {
+        baseQuery += ' AND e.type = "EXPENSE"';
+    } else if (type) {
         baseQuery += ' AND e.type = ?';
         params.push(type);
     }
@@ -71,17 +74,29 @@ export const getAllExpenses = async (filters: any) => {
 
     const [rows]: any = await pool.query(dataQuery, params);
 
-    // -------- GET TOTAL EXPENSE --------
-    const [totalRows]: any = await pool.query(
-        `
-        SELECT 
-        SUM(CASE WHEN e.type='EXPENSE' THEN e.amount ELSE 0 END) AS totalExpense
-        ${baseQuery}
-        `,
-        params
-    );
+    // -------- GET TOTAL INCOME & EXPENSE (only for admins) --------
+    let totalIncome = 0;
+    let totalExpense = 0;
+    let netProfit = 0;
 
-    const totalExpense = totalRows[0]?.totalExpense || 0;
+    if (role === 'SUPER_ADMIN' || role === 'SHOP_ADMIN') {
+        const [totalRows]: any = await pool.query(
+            `
+            SELECT 
+                SUM(CASE WHEN e.type='INCOME' THEN e.amount ELSE 0 END) AS totalIncome,
+                SUM(CASE WHEN e.type='EXPENSE' THEN e.amount ELSE 0 END) AS totalExpense
+            ${baseQuery}
+            `,
+            params
+        );
+
+        totalIncome = totalRows[0]?.totalIncome || 0;
+        totalExpense = totalRows[0]?.totalExpense || 0;
+        netProfit = totalIncome - totalExpense;
+    } else {
+        totalExpense = rows.reduce((sum: number, r: any) => sum + Number(r.amount || 0), 0);
+        netProfit = -totalExpense; // for normal users we only show expenses
+    }
 
     const expenses = rows.map((row: any) => {
         const { shopName, userName, ...expenseData } = row;
@@ -91,7 +106,9 @@ export const getAllExpenses = async (filters: any) => {
     });
 
     return {
+        totalIncome,
         totalExpense,
+        netProfit,
         count: expenses.length,
         data: expenses
     };

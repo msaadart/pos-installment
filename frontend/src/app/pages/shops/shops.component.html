@@ -49,7 +49,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr *ngFor="let shop of shops">
+                        <tr *ngFor="let shop of shops; trackBy: trackByFn">
                             <td data-label="ID">{{ shop.id }}</td>
                             <td data-label="Name" class="font-weight-bold">{{ shop.name }}</td>
                             <td data-label="Address">{{ shop.address }}</td>

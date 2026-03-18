@@ -22,6 +22,7 @@ export const getAllExpenses = async (req: AuthRequest, res: Response) => {
         if (req.query.search) filters.search = String(req.query.search);
         if (req.query.startDate) filters.startDate = String(req.query.startDate);
         if (req.query.endDate) filters.endDate = String(req.query.endDate);
+        filters.role = req.user.role;
         const expenses = await expenseService.getAllExpenses(filters);
         res.json(expenses);
     } catch (error: any) {

@@ -61,4 +61,8 @@ export class UsersComponent implements OnInit {
             this.userForm.reset({ role: 'SHOP_ADMIN' });
         });
     }
+
+    trackByFn(index:number, item:any) {
+        return item.id;
+    }
 }

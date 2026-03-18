@@ -141,7 +141,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr *ngFor="let product of products">
+                        <tr *ngFor="let product of products; trackBy: trackByFn">
                             <td data-label="Photo">
                                 <div class="product-img">
                                     <img *ngIf="product.imageUrl" [ngSrc]="apiUrl + product.imageUrl" width="50"

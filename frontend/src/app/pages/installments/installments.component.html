@@ -46,7 +46,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr *ngFor="let plan of plans">
+                        <tr *ngFor="let plan of plans; trackBy: trackByFn">
                             <td data-label="ID">{{ plan.id }}</td>
                             <td data-label="Customer">
                                 {{ plan.sale.customer?.name || 'Walk-in' }}
@@ -113,7 +113,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr *ngFor="let inst of selectedPlan.installments">
+                        <tr *ngFor="let inst of selectedPlan.installments; trackBy: trackByFn">
                             <td data-label="Due Date">{{ inst.dueDate | date }}</td>
                             <td data-label="Amount" class="font-weight-bold">Rs. {{ inst.amount | number:'1.0-0' }}</td>
                             <td data-label="Status">

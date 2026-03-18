@@ -25,9 +25,12 @@
 
 .header-actions {
     display: flex;
-    align-items: center;
     gap: 1rem;
     flex-wrap: wrap;
+}
+
+.red{
+    color:red;
 }
 
 .shop-filter {
@@ -218,6 +221,17 @@
         flex: 0 0 50%;
         max-width: 50%;
     }
+}
+
+.expense{
+    display: flex;
+    margin-top: 0;
+    flex-direction: column;
+}
+.label{
+    font-size: 12px;
+    color: #000000;
+    font-weight: 500;
 }
 
 @media (max-width: 767px) {

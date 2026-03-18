@@ -171,4 +171,8 @@ export class ProductsComponent implements OnInit {
         this.imagePreview = null;
         this.selectedFileBase64 = null;
     }
+
+    trackByFn(index:number, item:any) {
+        return item.id;
+    }
 }

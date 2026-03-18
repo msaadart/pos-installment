@@ -155,7 +155,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr *ngFor="let p of purchases">
+                        <tr *ngFor="let p of purchases; trackBy: trackByFn">
                             <td data-label="Invoice #">{{ p.invoiceNo }}  
                                 <span class="d-block small text-muted">{{ p.productName }}</span>
                             </td>
@@ -254,7 +254,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr *ngFor="let pay of purchasePayments">
+                        <tr *ngFor="let pay of purchasePayments; trackBy: trackByFn">
                             <td data-label="Invoice #">{{ pay.purchase?.invoiceNo || '-' }}</td>
                             <td data-label="Supplier">{{ pay.supplier?.name }}
                                 <span class="d-block small text-muted">{{ pay.supplier?.phone }}</span>

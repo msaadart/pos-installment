@@ -59,4 +59,8 @@ export class ShopsComponent implements OnInit {
             });
         }
     }
+
+    trackByFn(index:number, item:any) {
+        return item.id;
+    }
 }

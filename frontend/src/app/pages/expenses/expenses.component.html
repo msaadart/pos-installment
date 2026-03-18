@@ -1,7 +1,10 @@
 <div class="page-container">
     <div class="content-wrapper">
         <div class="page-header">
-            <h2>Expense Management</h2>
+            
+            <h2>
+                 @if(user?.role != 'SALES_USER'){Expense & Profit}@else{Expense}
+            </h2>
 
             <div class="header-actions">
                 <div *ngIf="user?.role === 'SUPER_ADMIN'" class="shop-filter text-muted">
@@ -12,12 +15,31 @@
                         }
                     </span>
                 </div>
-                <div class="total-expense">
-                    Total Expense: <span class="expense-value font-weight-bold text-danger">Rs. {{ totalExpense | number:'1.0-0' }}</span>
+                <div class="expense">
+                    <span class="label">Total Expense</span> 
+                    <span class="expense-value font-weight-bold text-danger">Rs. {{ totalExpense | number:'1.0-0' }}</span>
                 </div>
-                <button class="btn btn-primary" (click)="toggleForm()">
-                    <span class="icon">{{ showForm ? '&times;' : '+' }} </span> New Expense
-                </button>
+                @if(user?.role != 'SALES_USER') {
+                    <div class="expense">
+                        <span class="label"> Income </span><span class="expense-value font-weight-bold text-danger">Rs. {{ totalIncome | number:'1.0-0' }}</span>
+                    </div>
+                    <div class="expense">
+                        <span class="label">Profit</span> <span class="expense-value font-weight-bold text-danger">Rs. {{ netProfit | number:'1.0-0' }}</span> 
+                    </div>
+                    <div class="expense">
+                       <!-- <span class="label">Type</span> -->
+                       <select [(ngModel)]="selectedType" class="form-control">
+                            <option value="">All</option>
+                            <option value="INCOME">Income</option>
+                            <option value="EXPENSE">Expense</option>
+                        </select>
+                    </div>
+                }
+                <div class="expense">
+                    <button class="btn btn-primary" (click)="toggleForm()">
+                        <span class="icon">{{ showForm ? '&times;' : '+' }} </span> New Expense
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -29,7 +51,7 @@
 
                 <div class="form-row">
                     <div class="form-group col-md-6">
-                        <label class="form-label">Amount</label>
+                        <label class="form-label">Amount <span class="red">*</span></label>
                         <input type="number" class="form-control" formControlName="amount">
                     </div>
                     <div class="form-group col-md-6">
@@ -41,7 +63,7 @@
 
                 <div class="form-row">
                     <div class="form-group col-md-6">
-                        <label class="form-label">Payment Type</label>
+                        <label class="form-label">Payment Type <span class="red">*</span></label>
                         <select class="form-control custom-select" formControlName="paymentMethod">
                             <option value="CASH">CASH</option>
                             <option value="ONLINE">ONLINE</option>
@@ -60,7 +82,7 @@
                     </div>
 
                      <div class="form-group col-md-6">
-                        <label class="form-label">Description</label>
+                        <label class="form-label">Description <span class="red">*</span></label>
                         <input type="text" class="form-control" formControlName="description">
                     </div>
 
@@ -114,25 +136,34 @@
                             <th>Payment Method</th>
                             <th>User</th>
                             @if(user?.role === 'SUPER_ADMIN' || user?.role === 'SHOP_ADMIN'){
+                                <th>Type</th>
                             <th>Actions</th>
                             }
                         </tr>
                     </thead>
                     <tbody>
-                        <tr *ngFor="let e of expenses">
-                            <td data-label="Date">{{ e.date | date }}   {{e.date | date:'shortTime' }}</td>
-                            <td data-label="Description">{{ e.description }}</td>
-                            <td data-label="Category"><span class="badge badge-secondary">{{ e.category }}</span></td>
-                            <td data-label="Amount" class="font-weight-bold text-danger">
-                                Rs. {{ e.amount | number:'1.0-0' }}
-                            </td>
-                            <td data-label="Payment Method">{{ e.paymentMethod }}</td>
-                            <td data-label="User">{{ e.user?.name || 'N/A' }}</td>
-                            @if(user?.role === 'SUPER_ADMIN' && e.allowDeleted || user?.role === 'SHOP_ADMIN' && e.allowDeleted){
-                                <td data-label="Actions" class="action-buttons">
+                        <tr *ngFor="let e of expenses; trackBy: trackByFn">
+                            <!-- Filter by type -->
+                            <ng-container *ngIf="!selectedType || e.type === selectedType">
+                                <td data-label="Date">{{ e.date | date }} {{ e.date | date:'shortTime' }}</td>
+                                <td data-label="Description">{{ e.description }}</td>
+                                <td data-label="Category"><span class="badge badge-secondary">{{ e.category }}</span></td>
+                                <td data-label="Amount" class="font-weight-bold text-danger">
+                                    Rs. {{ e.amount | number:'1.0-0' }}
+                                </td>
+                                <td data-label="Payment Method">{{ e.paymentMethod }}</td>
+                                <td data-label="User">{{ e.user?.name || 'N/A' }}</td>
+
+                                <!-- Show Delete button only for admins with allowDeleted -->
+                                  @if(user?.role === 'SUPER_ADMIN' || user?.role === 'SHOP_ADMIN'){
+                                    <td>{{e.type}}</td>
+                                <td *ngIf="e.allowDeleted"
+                                    data-label="Actions" class="action-buttons">
                                     <button class="btn btn-danger btn-sm" (click)="deleteExpense(e.id)">Delete</button>
                                 </td>
-                            }
+                                
+                                 }
+                            </ng-container>
                         </tr>
                         <tr *ngIf="expenses.length === 0">
                             <td colspan="6" class="text-center py-4 text-muted">No expenses found for the selected

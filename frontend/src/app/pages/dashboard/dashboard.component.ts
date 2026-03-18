@@ -41,6 +41,10 @@ export class DashboardComponent implements OnInit {
     }
   }
 
+  trackByFn(index:number, item:any) {
+        return item.id;
+    }
+
   onSaleTypeChange() {
     this.reportService.getRecentSale(this.saleType).subscribe(data => this.stats = data);
   }

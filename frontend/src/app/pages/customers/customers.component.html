@@ -72,7 +72,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr *ngFor="let c of filteredCustomers">
+                        <tr *ngFor="let c of filteredCustomers; trackBy: trackByFn">
                             <td data-label="Name" class="font-weight-bold">{{ c.name }}</td>
                             <td data-label="Phone">{{ c.phone }}</td>
                             <td data-label="CNIC">{{ c.cnic || '-' }}</td>

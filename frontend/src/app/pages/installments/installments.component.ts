@@ -265,4 +265,8 @@ export class InstallmentsComponent implements OnInit {
             printWindow.document.close();
         }
     }
+
+    trackByFn(index:number, item:any) {
+        return item.id;
+    }
 }

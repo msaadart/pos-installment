@@ -205,4 +205,8 @@ export class PosComponent implements OnInit {
             }
         });
     }
+
+    trackByFn(index:number, item:any) {
+        return item.id;
+    }
 }

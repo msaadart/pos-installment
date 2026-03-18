@@ -15,10 +15,14 @@ import { AuthService } from '../../services/auth.service';
 export class ExpensesComponent implements OnInit {
     expenses: any[] = [];
     totalExpense: number = 0;
+    totalIncome: number = 0;
+    netProfit: number = 0;
     shops: any[] = [];
     expenseForm: FormGroup;
     showForm = false;
     user: any = this.authService.getCurrentUser();
+    selectedType: 'INCOME' | 'EXPENSE' | '' = '';
+    
 
     searchTerm = '';
     startDate = '';
@@ -60,9 +64,11 @@ export class ExpensesComponent implements OnInit {
         if (this.searchTerm) filters.search = this.searchTerm;
         if (this.startDate) filters.startDate = this.startDate;
         if (this.endDate) filters.endDate = this.endDate;
-        this.expenseService.getAllExpenses(filters).subscribe(data => {this.expenses = data.data, this.totalExpense = data.totalExpense});
+        this.expenseService.getAllExpenses(filters).subscribe(data => 
+            {this.expenses = data.data, this.totalExpense = data.totalExpense, 
+            this.totalIncome = data.totalIncome, this.netProfit = data.netProfit
+});
         this.shopService.getAllShops().subscribe(data => this.shops = data);
-        console.log(this.expenses);
     }
 
     onSearch() {
@@ -86,6 +92,10 @@ export class ExpensesComponent implements OnInit {
                 this.loadData();
             });
         }
+    }
+
+    trackByFn(index:number, item:any) {
+        return item.id;
     }
 
     onSubmit() {

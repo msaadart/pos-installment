@@ -245,4 +245,8 @@ export class PurchasesComponent implements OnInit {
             printWindow.document.close();
         }
     }
+
+    trackByFn(index:number, item:any) {
+        return item.id;
+    }
 }

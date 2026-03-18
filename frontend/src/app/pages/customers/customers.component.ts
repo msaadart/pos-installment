@@ -54,6 +54,10 @@ export class CustomersComponent implements OnInit {
     }
   }
 
+  trackByFn(index:number, item:any) {
+        return item.id;
+  }
+
   resetForm() {
     this.editMode = false;
     this.selectedCustomerId = null;

@@ -117,7 +117,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr *ngFor="let sale of stats.recentSales">
+                        <tr *ngFor="let sale of stats.recentSales; trackBy: trackByFn">
                             <td>{{ sale.invoiceNo }}</td>
                             <td>{{ sale.customer?.name }}
                                 <span class="d-block small text-muted">CNIC: {{ sale.customer?.cnic }}</span>
