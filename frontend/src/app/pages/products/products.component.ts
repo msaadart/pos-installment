@@ -46,8 +46,6 @@ export class ProductsComponent implements OnInit {
             name: ['', Validators.required],
             sku: ['', Validators.required],
             price: [0, Validators.required],
-            costPrice: [0, Validators.required],
-            stock: [0, Validators.required],
             shopId: [Number, Validators.required],
             categoryId: [Number],
             brandId: [Number],
@@ -167,7 +165,9 @@ export class ProductsComponent implements OnInit {
         this.showForm = false;
         this.isEditing = false;
         this.editingProductId = null;
-        this.productForm.reset();
+        this.productForm.reset({
+        shopId: this.productForm.get('shopId')?.value  // keep only 'shopId'
+        });
         this.imagePreview = null;
         this.selectedFileBase64 = null;
     }

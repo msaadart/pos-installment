@@ -4,12 +4,17 @@
             <h2>Purchases</h2>
             <div class="header-actions">
                 <button class="btn btn-secondary" (click)="showSupplierForm = !showSupplierForm">
-                    <span class="d-mobile-none">Add </span>Supplier
+                    <span class="d-mobile-none">Add </span> Supplier
+                </button>
+                <button class="btn btn-primary" (click)="clearAmounttoggleForm()">
+                    <span class="icon">Clear </span> <span class="d-mobile-none"> 
+                         Amount </span>
                 </button>
                 <button class="btn btn-primary" (click)="toggleForm()">
-                    <span class="icon">{{ showForm ? '&times;' : '+' }}</span> <span class="d-mobile-none">New
+                    <span class="icon">{{ showForm ? '&times;' : '+' }} </span> <span class="d-mobile-none"> New
                         Purchase</span>
                 </button>
+                
             </div>
         </div>
 
@@ -133,55 +138,9 @@
             </form>
         </div>
 
-        <!-- Purchase List -->
-        <div class="card mb-4">
-            <div class="search-bar">
-                <input type="text" class="form-control search-input" [(ngModel)]="searchTerm"
-                    placeholder="Search purchases by invoice or supplier..." (keyup.enter)="onSearch()">
-                <button class="btn btn-primary" (click)="onSearch()">Search</button>
-            </div>
-
-            <div class="table-responsive">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Invoice #</th>
-                            <th>Supplier</th>    
-                            <th>Total</th>
-                            <th>Paid</th>
-                            <th>Balance</th>
-                            <th>Cost</th>
-                            <th>Date</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr *ngFor="let p of purchases; trackBy: trackByFn">
-                            <td data-label="Invoice #">{{ p.invoiceNo }}  
-                                <span class="d-block small text-muted">{{ p.productName }}</span>
-                            </td>
-                            <td data-label="Supplier">
-                                {{ p.supplier?.name }}
-                                <span class="d-block small text-muted">{{ p.supplier?.company }} {{ p.supplier?.phone }}</span>
-                            </td>
-                            <td data-label="Total" class="font-weight-bold">Rs. {{ p.totalAmount | number:'1.0-0' }}
-                            </td>
-                            <td data-label="Paid" class="text-success">Rs. {{ p.paidAmount | number:'1.0-0' }}</td>
-                            <td data-label="Balance" class="text-danger">Rs. {{ p.balance | number:'1.0-0' }}</td>
-                            <td data-label="Cost / Qty" class="text-muted">{{ p.itemCostPrice | number:'1.0-0' }} 
-                                 <span class="d-block small text-muted">Qty: {{ p.itemQuantity }}</span>
-                            </td>
-                            <td data-label="Date">{{ p.createdAt | date:'short' }} {{ p.createdAt | date:'shortTime' }}</td>
-                        </tr>
-                        <tr *ngIf="purchases.length === 0">
-                            <td colspan="7" class="text-center py-4 text-muted">No purchases found.</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Clear Balance Section -->
-        <div class="card mb-4 border-warning">
+         <!-- Clear Balance Section -->
+         @if(showClearAmountForm()){
+        <div class="card form-card mb-4 border-primary">
             <div class="card-header">
                 <h3>Clear Remaining Amount</h3>
             </div>
@@ -225,11 +184,65 @@
 
                 <div class="form-actions mt-2">
                     <button class="btn btn-primary" (click)="submitClearPurchaseBalance()">Submit Payment</button>
-                    <button type="button" class="btn btn-secondary" (click)="searchPayments()">Search Payment</button>
+                    <!-- <button type="button" class="btn btn-secondary" (click)="searchPayments()">Search Payment</button> -->
                     <button type="button" class="btn btn-tertiary" (click)="loadPurchasePayments()">Clear</button>
                 </div>
             </div>
         </div>
+        }
+
+        <!-- Purchase List -->
+        <div class="card mb-4">
+            <div class="search-bar">
+                <input type="text" class="form-control search-input" [(ngModel)]="searchTerm"
+                    placeholder="Search purchases by invoice or supplier..." (keyup.enter)="onSearch()">
+                <button class="btn btn-primary" (click)="onSearch()">Search</button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Invoice #</th>
+                            <th>Supplier</th>    
+                            <th>Total</th>
+                            <th>Paid</th>
+                            <th>Balance</th>
+                            <th>Cost</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let p of purchases; trackBy: trackByFn">
+                            <td data-label="Invoice #">{{ p.invoiceNo }}  
+                                <span class="d-block small text-muted">{{ p.productName }}</span>
+                            </td>
+                            <td data-label="Supplier">
+                                {{ p.supplier?.name }}
+                                <span class="d-block small text-muted">{{ p.supplier?.company }} {{ p.supplier?.phone }}</span>
+                            </td>
+                            <td data-label="Total" class="font-weight-bold">Rs. {{ p.totalAmount | number:'1.0-0' }}
+                            </td>
+                            <td data-label="Paid" class="text-success">Rs. {{ p.paidAmount | number:'1.0-0' }}</td>
+                            <td data-label="Balance" class="text-danger">Rs. {{ p.balance | number:'1.0-0' }}</td>
+                            <td data-label="Cost / Qty" class="text-muted">{{ p.itemCostPrice | number:'1.0-0' }} 
+                                 <span class="d-block small text-muted">Qty: {{ p.itemQuantity }}</span>
+                            </td>
+                            <td data-label="Date">{{ p.createdAt | date:'short' }} {{ p.createdAt | date:'shortTime' }}</td>
+                            <td>
+                                <button class="btn btn-primary btn-sm mr" (click)="searchPayments(p.id)">View</button>
+                            </td>
+                        </tr>
+                        <tr *ngIf="purchases.length === 0">
+                            <td colspan="7" class="text-center py-4 text-muted">No purchases found.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+       
 
         <!-- Payment History Table -->
         <div class="card">

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
@@ -24,6 +24,7 @@ export class PurchasesComponent implements OnInit {
     purchaseForm: FormGroup;
     showForm = false;
     showSupplierForm = false;
+    showClearAmountForm = signal(false);
     private toastr = inject<ToastrService>(ToastrService);
     newSupplier = { name: '', phone: '', company: '' };
 
@@ -78,8 +79,8 @@ export class PurchasesComponent implements OnInit {
         this.loadData();
     }
 
-    searchPayments() {
-        this.loadPurchasePayments({ purchaseId: this.clearBalPurchaseId });
+    searchPayments(id:number) {
+        this.loadPurchasePayments({ purchaseId: id });
     }
 
     loadPurchasePayments(filters: any = {}) {
@@ -88,6 +89,10 @@ export class PurchasesComponent implements OnInit {
 
     toggleForm() {
         this.showForm = !this.showForm;
+    }
+
+    clearAmounttoggleForm(){
+        this.showClearAmountForm.set(!this.showClearAmountForm())
     }
 
     addSupplier() {

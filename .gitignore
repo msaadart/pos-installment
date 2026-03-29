@@ -8,4 +8,4 @@
 /backend/.vscode
 /backend/dist
 /backend/installment-frontend
-/backend/uploads
+/backend/uploads/*

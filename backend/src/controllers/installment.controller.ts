@@ -1,19 +1,20 @@
+import { NextFunction } from 'express';
 import { Request, Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import * as installmentService from '../services/installment.service';
 import * as expenseService from '../services/expense.service';
 import * as customerService from '../services/customer.service';
 
-export const createInstallmentSale = async (req: Request, res: Response) => {
+export const createInstallmentSale = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const result = await installmentService.createInstallmentSale(req.body);
         res.status(201).json(result);
     } catch (error: any) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
-export const getInstallmentPlans = async (req: AuthRequest, res: Response) => {
+export const getInstallmentPlans = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         const filters: any = { ...req.query };
         if (req.query.search) filters.search = String(req.query.search);
@@ -29,17 +30,17 @@ export const getInstallmentPlans = async (req: AuthRequest, res: Response) => {
         const plans = await installmentService.getInstallmentPlans(filters);
         res.json(plans);
     } catch (error: any) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
-export const payInstallment = async (req: Request, res: Response) => {
+export const payInstallment = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const user = (req as AuthRequest).user;
         const { amount, paymentMethod, referenceId } = req.body;
         const installment = await installmentService.payInstallment(Number(req.params.id), amount, paymentMethod, referenceId, user);
         res.json(installment);
     } catch (error: any) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };

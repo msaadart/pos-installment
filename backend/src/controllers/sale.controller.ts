@@ -1,17 +1,18 @@
+import { NextFunction } from 'express';
 import { Request, Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import * as saleService from '../services/sale.service';
 
-export const createSale = async (req: Request, res: Response) => {
+export const createSale = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const sale = await saleService.createSale(req.body);
         res.status(201).json(sale);
     } catch (error: any) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
-export const getAllSales = async (req: AuthRequest, res: Response) => {
+export const getAllSales = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         const filters: any = {};
         if (req.query.shopId) filters.shopId = Number(req.query.shopId);
@@ -27,16 +28,16 @@ export const getAllSales = async (req: AuthRequest, res: Response) => {
         const sales = await saleService.getAllSales(filters);
         res.json(sales);
     } catch (error: any) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
-export const getSaleById = async (req: Request, res: Response) => {
+export const getSaleById = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const sale = await saleService.getSaleById(Number(req.params.id));
         if (!sale) return res.status(404).json({ message: 'Sale not found' });
         res.json(sale);
     } catch (error: any) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };

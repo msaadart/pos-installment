@@ -1,8 +1,9 @@
+import { NextFunction } from 'express';
 import { Request, Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import * as reportService from '../services/report.service';
 
-export const getRecentSale = async (req: AuthRequest, res: Response) => {
+export const getRecentSale = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         const filters: any = {};
         filters.shopId = req.user.shopId;
@@ -10,11 +11,11 @@ export const getRecentSale = async (req: AuthRequest, res: Response) => {
         const stats = await reportService.getRecentSale(filters);
         res.json(stats);
     } catch (error: any) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
-export const getDashboard = async (req: AuthRequest, res: Response) => {
+export const getDashboard = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         const filters: any = {};
         if (req.user.role !== 'SUPER_ADMIN') {
@@ -35,11 +36,11 @@ export const getDashboard = async (req: AuthRequest, res: Response) => {
         const stats = await reportService.getDashboardStats(filters);
         res.json(stats);
     } catch (error: any) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
-export const getSalesReport = async (req: AuthRequest, res: Response) => {
+export const getSalesReport = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         const { startDate, endDate } = req.query;
         if (!startDate || !endDate) return res.status(400).json({ message: 'Start and End dates required' });
@@ -57,11 +58,11 @@ export const getSalesReport = async (req: AuthRequest, res: Response) => {
         const report = await reportService.getSalesReport(filters);
         res.json(report);
     } catch (error: any) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
-export const getStockReport = async (req: AuthRequest, res: Response) => {
+export const getStockReport = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         const filters: any = {};
         if (req.user.role !== 'SUPER_ADMIN') {
@@ -72,11 +73,11 @@ export const getStockReport = async (req: AuthRequest, res: Response) => {
         const report = await reportService.getStockReport(filters);
         res.json(report);
     } catch (error: any) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
-export const getInstallmentDueReport = async (req: AuthRequest, res: Response) => {
+export const getInstallmentDueReport = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         const filters: any = { ...req.query };
         if (req.user.role !== 'SUPER_ADMIN') {
@@ -87,11 +88,11 @@ export const getInstallmentDueReport = async (req: AuthRequest, res: Response) =
         const report = await reportService.getInstallmentDueReport(filters);
         res.json(report);
     } catch (error: any) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
-export const getCustomerInstallmentSummary = async (req: AuthRequest, res: Response) => {
+export const getCustomerInstallmentSummary = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         const filters: any = { ...req.query };
         if (req.user.role !== 'SUPER_ADMIN') {
@@ -103,6 +104,6 @@ export const getCustomerInstallmentSummary = async (req: AuthRequest, res: Respo
         const report = await reportService.getCustomerInstallmentSummary(filters);
         res.json(report);
     } catch (error: any) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };

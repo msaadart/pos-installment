@@ -60,7 +60,7 @@ export const createProduct = async (data: any) => {
     const [result]: any = await pool.query(
         `INSERT INTO product 
         (name, sku, barcode, description, price, costPrice, stock, minStock, shopId, categoryId, brandId, imageUrl) 
-        VALUES (?, ?, ?, ?, ?, ?, COALESCE(?, 0), COALESCE(?, 5), ?, ?, ?, ?)`,
+        VALUES (?, ?, ?, ?, ?, COALESCE(?, 0), COALESCE(?, 0), COALESCE(?, 5), ?, ?, ?, ?)`,
         [name, sku, barcode || null, description || null, price, costPrice, stock, minStock, shopId, categoryId || null, brandId || null, imageUrl]
     );
 
@@ -134,16 +134,59 @@ export const getProductById = async (id: number) => {
 
 export const updateProduct = async (id: number, data: any) => {
     const keys = Object.keys(data);
+
+    // If no data, return existing product
     if (keys.length === 0) {
         const [rows]: any = await pool.query('SELECT * FROM product WHERE id = ?', [id]);
         return rows[0];
     }
-    const setClause = keys.map(k => `${k} = ?`).join(', ');
-    const values = keys.map(k => data[k]);
+
+    let imageUrl = null;
+    if (data.image) {
+         
+        const [existing]: any = await pool.query('SELECT imageUrl FROM product WHERE id = ?', [id]);
+
+        if (existing[0]?.imageUrl) {
+            const oldPath = path.join(process.cwd(), existing[0].imageUrl);
+            if (fs.existsSync(oldPath)) {
+                fs.unlinkSync(oldPath);
+            }
+        }
+        const base64Data = data.image.replace(/^data:image\/\w+;base64,/, "");
+
+        const fileName = `${Date.now()}-${data.sku || 'product'}.png`;
+        const uploadsPath = path.join(process.cwd(), 'uploads', 'products');
+
+        // Ensure directory exists
+        if (!fs.existsSync(uploadsPath)) {
+            fs.mkdirSync(uploadsPath, { recursive: true });
+        }
+
+        const filePath = path.join(uploadsPath, fileName);
+
+        // Save image
+        fs.writeFileSync(filePath, base64Data, 'base64');
+
+        imageUrl = `/uploads/products/${fileName}`;
+
+        // ✅ Important: add to update data
+        data.imageUrl = imageUrl;
+
+        // ❗ Optional: remove base64 image from DB update
+        delete data.image;
+    }
+
+    // Build dynamic query
+    const updateKeys = Object.keys(data);
+    const setClause = updateKeys.map(k => `${k} = ?`).join(', ');
+    const values = updateKeys.map(k => data[k]);
+
     values.push(id);
 
     await pool.query(`UPDATE product SET ${setClause} WHERE id = ?`, values);
+
     const [rows]: any = await pool.query('SELECT * FROM product WHERE id = ?', [id]);
+
     return rows[0];
 };
 

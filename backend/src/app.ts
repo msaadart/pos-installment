@@ -5,6 +5,12 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import path from 'path';
 
+// Security Middlewares
+import rateLimit from 'express-rate-limit';
+
+// Global Error Handler
+import { errorHandler } from './middleware/errorHandler';
+
 dotenv.config();
 
 const app = express();
@@ -20,51 +26,41 @@ import purchaseRoutes from './routes/purchase.routes';
 import expenseRoutes from './routes/expense.routes';
 import customerRoutes from './routes/customer.routes';
 
+// Ensure CORS allows necessary origins only in production
 app.use(cors({
-    // origin: 'http://localhost:4200',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    credentials: true,
-}
-));
-// app.use(
-//   helmet({
-//     contentSecurityPolicy: false
-//   })
-// );
-app.use(helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
-     contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-
-        scriptSrc: [
-          "'self'",
-          "'unsafe-inline'"   // allow inline JS
-        ],
-
-        scriptSrcAttr: [
-          "'unsafe-inline'"   // ✅ allow onclick, onload etc
-        ],
-
-        styleSrc: [
-          "'self'",
-          "'unsafe-inline'"   // allow inline CSS
-        ],
-
-         imgSrc: [
-          "'self'",
-          "data:",
-          "blob:"
-        ],
-
-        objectSrc: ["'none'"],
-        upgradeInsecureRequests: []
-      }
-    }
+  origin: 'https://pos.giftokarachi.com/',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  credentials: true,
 }));
+
+// Apply Helmet for Security Headers
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrcAttr: ["'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "blob:"],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: []
+    }
+  }
+}));
+
+// Apply Rate Limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+  message: { success: false, message: 'Too many requests from this IP, please try again later.' }
+});
+app.use('/api', limiter); // Apply rate limiting to API routes
+
 app.use(morgan('dev'));
 
+// Parse incoming requests
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ limit: '5mb', extended: true }));
 
@@ -82,15 +78,17 @@ app.use('/api/expenses', expenseRoutes);
 app.use('/api/customers', customerRoutes);
 
 const angularPath = path.join(__dirname, process.env.FRONTEND_URL || 'installment-frontend/browser');
-
 app.use(express.static(angularPath));
+
+app.use('/api', (req, res) => {
+  res.status(404).json({ message: 'API Route Not Found' });
+});
 
 app.use((req, res) => {
   res.sendFile(path.join(angularPath, 'index.html'));
 });
 
-app.get('/', (req, res) => {
-    res.send('API is running...');
-});
+// Use Global Error Handler LAST
+app.use(errorHandler);
 
 export default app;
